@@ -1,0 +1,11 @@
+/target/
+**/*.rs.bk
+Cargo.lock
+*.ll
+
+# Ignore Vim swap files
+*.swp
+
+# MacOS specific files
+.DS_Store
+__MACOSX/

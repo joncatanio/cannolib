@@ -1,0 +1,11 @@
+[package]
+name = "cannolib"
+version = "0.1.0"
+authors = ["Jon Catanio <joncatanio@gmail.com>"]
+
+[lib]
+name = "cannolib"
+crate-type = ["dylib"]
+
+[dependencies]
+libc = "~0.2"
