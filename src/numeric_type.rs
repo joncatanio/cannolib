@@ -21,19 +21,18 @@ impl ops::Add for NumericType {
     type Output = NumericType;
 
     fn add(self, other: NumericType) -> NumericType {
-        match self {
-            NumericType::Integer(i1) => {
-                match other {
-                    NumericType::Integer(i2) => NumericType::Integer(i1 + i2),
-                    NumericType::Float(f2) => NumericType::Float(i1 as f32 + f2)
-                }
+        match (self, other) {
+            (NumericType::Integer(lhs), NumericType::Integer(rhs)) => {
+                NumericType::Integer(lhs + rhs)
             },
-            NumericType::Float(f1) => {
-                match other {
-                    NumericType::Integer(i2) =>
-                        NumericType::Float(f1 + i2 as f32),
-                    NumericType::Float(f2) => NumericType::Float(f1 + f2)
-                }
+            (NumericType::Integer(lhs), NumericType::Float(rhs)) => {
+                NumericType::Float(lhs as f32 + rhs)
+            },
+            (NumericType::Float(lhs), NumericType::Integer(rhs)) => {
+                NumericType::Float(lhs + rhs as f32)
+            },
+            (NumericType::Float(lhs), NumericType::Float(rhs)) => {
+                NumericType::Float(lhs + rhs)
             }
         }
     }
@@ -43,19 +42,39 @@ impl ops::Mul for NumericType {
     type Output = NumericType;
 
     fn mul(self, other: NumericType) -> NumericType {
-        match self {
-            NumericType::Integer(i1) => {
-                match other {
-                    NumericType::Integer(i2) => NumericType::Integer(i1 * i2),
-                    NumericType::Float(f2) => NumericType::Float(i1 as f32 * f2)
-                }
+        match (self, other) {
+            (NumericType::Integer(lhs), NumericType::Integer(rhs)) => {
+                NumericType::Integer(lhs * rhs)
             },
-            NumericType::Float(f1) => {
-                match other {
-                    NumericType::Integer(i2) =>
-                        NumericType::Float(f1 * i2 as f32),
-                    NumericType::Float(f2) => NumericType::Float(f1 * f2)
-                }
+            (NumericType::Integer(lhs), NumericType::Float(rhs)) => {
+                NumericType::Float(lhs as f32 * rhs)
+            },
+            (NumericType::Float(lhs), NumericType::Integer(rhs)) => {
+                NumericType::Float(lhs * rhs as f32)
+            },
+            (NumericType::Float(lhs), NumericType::Float(rhs)) => {
+                NumericType::Float(lhs * rhs)
+            }
+        }
+    }
+}
+
+impl ops::Sub for NumericType {
+    type Output = NumericType;
+
+    fn sub(self, other: NumericType) -> NumericType {
+        match (self, other) {
+            (NumericType::Integer(lhs), NumericType::Integer(rhs)) => {
+                NumericType::Integer(lhs - rhs)
+            },
+            (NumericType::Integer(lhs), NumericType::Float(rhs)) => {
+                NumericType::Float(lhs as f32 - rhs)
+            },
+            (NumericType::Float(lhs), NumericType::Integer(rhs)) => {
+                NumericType::Float(lhs - rhs as f32)
+            },
+            (NumericType::Float(lhs), NumericType::Float(rhs)) => {
+                NumericType::Float(lhs - rhs)
             }
         }
     }

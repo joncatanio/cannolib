@@ -34,7 +34,7 @@ impl cmp::PartialEq for Value {
             (&Value::Str(_), &Value::None) => false,
             (&Value::Bool(ref val1), &Value::Bool(ref val2)) => {
                 val1 == val2
-            }
+            },
             (&Value::Bool(_), &Value::None) => false,
             (&Value::None, &Value::None) => true,
             _ => unimplemented!()
@@ -53,9 +53,86 @@ impl cmp::PartialEq for Value {
             (&Value::Str(_), &Value::None) => true,
             (&Value::Bool(ref val1), &Value::Bool(ref val2)) => {
                 val1 != val2
-            }
+            },
             (&Value::Bool(_), &Value::None) => true,
             (&Value::None, &Value::None) => false,
+            _ => unimplemented!()
+        }
+    }
+}
+
+impl cmp::PartialOrd for Value {
+    fn partial_cmp(&self, other: &Value) -> Option<cmp::Ordering> {
+        match (self, other) {
+            (&Value::Number(ref val1), &Value::Number(ref val2)) => {
+                val1.partial_cmp(val2)
+            },
+            (&Value::Str(ref val1), &Value::Str(ref val2)) => {
+                val1.partial_cmp(val2)
+            },
+            (&Value::Bool(ref val1), &Value::Bool(ref val2)) => {
+                val1.partial_cmp(val2)
+            },
+            _ => unimplemented!()
+        }
+    }
+
+    fn lt(&self, other: &Value) -> bool {
+        match (self, other) {
+            (&Value::Number(ref val1), &Value::Number(ref val2)) => {
+                val1 < val2
+            },
+            (&Value::Str(ref val1), &Value::Str(ref val2)) => {
+                val1 < val2
+            },
+            (&Value::Bool(ref val1), &Value::Bool(ref val2)) => {
+                val1 < val2
+            },
+            _ => unimplemented!()
+        }
+    }
+
+    fn le(&self, other: &Value) -> bool {
+        match (self, other) {
+            (&Value::Number(ref val1), &Value::Number(ref val2)) => {
+                val1 <= val2
+            },
+            (&Value::Str(ref val1), &Value::Str(ref val2)) => {
+                val1 <= val2
+            },
+            (&Value::Bool(ref val1), &Value::Bool(ref val2)) => {
+                val1 <= val2
+            },
+            _ => unimplemented!()
+        }
+    }
+
+    fn gt(&self, other: &Value) -> bool {
+        match (self, other) {
+            (&Value::Number(ref val1), &Value::Number(ref val2)) => {
+                val1 > val2
+            },
+            (&Value::Str(ref val1), &Value::Str(ref val2)) => {
+                val1 > val2
+            },
+            (&Value::Bool(ref val1), &Value::Bool(ref val2)) => {
+                val1 > val2
+            },
+            _ => unimplemented!()
+        }
+    }
+
+    fn ge(&self, other: &Value) -> bool {
+        match (self, other) {
+            (&Value::Number(ref val1), &Value::Number(ref val2)) => {
+                val1 >= val2
+            },
+            (&Value::Str(ref val1), &Value::Str(ref val2)) => {
+                val1 >= val2
+            },
+            (&Value::Bool(ref val1), &Value::Bool(ref val2)) => {
+                val1 >= val2
+            },
             _ => unimplemented!()
         }
     }
@@ -65,13 +142,9 @@ impl ops::Add for Value {
     type Output = Value;
 
     fn add(self, other: Value) -> Value {
-        // TODO match tuple (self, other) to avoid nested matching
-        match self {
-            Value::Number(num) => {
-                match other {
-                    Value::Number(other_num) => Value::Number(num + other_num),
-                    _ => unimplemented!()
-                }
+        match (self, other) {
+            (Value::Number(lhs), Value::Number(rhs)) => {
+                Value::Number(lhs + rhs)
             },
             _ => unimplemented!()
         }
@@ -82,12 +155,22 @@ impl ops::Mul for Value {
     type Output = Value;
 
     fn mul(self, other: Value) -> Value {
-        match self {
-            Value::Number(num) => {
-                match other {
-                    Value::Number(other_num) => Value::Number(num * other_num),
-                    _ => unimplemented!()
-                }
+        match (self, other) {
+            (Value::Number(lhs), Value::Number(rhs)) => {
+                Value::Number(lhs * rhs)
+            },
+            _ => unimplemented!()
+        }
+    }
+}
+
+impl ops::Sub for Value {
+    type Output = Value;
+
+    fn sub(self, other: Value) -> Value {
+        match (self, other) {
+            (Value::Number(lhs), Value::Number(rhs)) => {
+                Value::Number(lhs - rhs)
             },
             _ => unimplemented!()
         }
