@@ -151,6 +151,58 @@ impl ops::Add for Value {
     }
 }
 
+impl ops::BitAnd for Value {
+    type Output = Value;
+
+    fn bitand(self, other: Value) -> Value {
+        match (self, other) {
+            (Value::Number(lhs), Value::Number(rhs)) => {
+                Value::Number(lhs & rhs)
+            },
+            _ => panic!("Bitwise AND applies to Value::Number")
+        }
+    }
+}
+
+impl ops::BitOr for Value {
+    type Output = Value;
+
+    fn bitor(self, other: Value) -> Value {
+        match (self, other) {
+            (Value::Number(lhs), Value::Number(rhs)) => {
+                Value::Number(lhs | rhs)
+            },
+            _ => panic!("Bitwise OR applies to Value::Number")
+        }
+    }
+}
+
+impl ops::BitXor for Value {
+    type Output = Value;
+
+    fn bitxor(self, other: Value) -> Value {
+        match (self, other) {
+            (Value::Number(lhs), Value::Number(rhs)) => {
+                Value::Number(lhs ^ rhs)
+            },
+            _ => panic!("Bitwise XOR applies to Value::Number")
+        }
+    }
+}
+
+impl ops::Div for Value {
+    type Output = Value;
+
+    fn div(self, other: Value) -> Value {
+        match (self, other) {
+            (Value::Number(lhs), Value::Number(rhs)) => {
+                Value::Number(lhs / rhs)
+            },
+            _ => unimplemented!()
+        }
+    }
+}
+
 impl ops::Mul for Value {
     type Output = Value;
 
@@ -158,6 +210,45 @@ impl ops::Mul for Value {
         match (self, other) {
             (Value::Number(lhs), Value::Number(rhs)) => {
                 Value::Number(lhs * rhs)
+            },
+            _ => unimplemented!()
+        }
+    }
+}
+
+impl ops::Rem for Value {
+    type Output = Value;
+
+    fn rem(self, other: Value) -> Value {
+        match (self, other) {
+            (Value::Number(lhs), Value::Number(rhs)) => {
+                Value::Number(lhs % rhs)
+            },
+            _ => unimplemented!()
+        }
+    }
+}
+
+impl ops::Shl<Value> for Value {
+    type Output = Value;
+
+    fn shl(self, other: Value) -> Value {
+        match (self, other) {
+            (Value::Number(lhs), Value::Number(rhs)) => {
+                Value::Number(lhs << rhs)
+            },
+            _ => unimplemented!()
+        }
+    }
+}
+
+impl ops::Shr<Value> for Value {
+    type Output = Value;
+
+    fn shr(self, other: Value) -> Value {
+        match (self, other) {
+            (Value::Number(lhs), Value::Number(rhs)) => {
+                Value::Number(lhs >> rhs)
             },
             _ => unimplemented!()
         }
@@ -222,5 +313,135 @@ mod tests {
         assert_eq!(none == none, true);
         assert_eq!(x == none, false);
         assert_eq!(x != none, true);
+    }
+
+    #[test]
+    fn partial_ord_value_number() {
+        let x = Value::Number(NumericType::Integer(5));
+        let y = Value::Number(NumericType::Integer(6));
+
+        assert_eq!(x < y, true);
+        assert_eq!(y > x, true);
+        assert_eq!(x >= x, true);
+        assert_eq!(x <= y, true);
+    }
+
+    #[test]
+    fn partial_ord_value_str() {
+        let x = Value::Str("a".to_string());
+        let y = Value::Str("z".to_string());
+
+        assert_eq!(x < y, true);
+        assert_eq!(x > y, false);
+        assert_eq!(x >= y, false);
+        assert_eq!(x <= y, true);
+    }
+
+    #[test]
+    fn partial_ord_value_bool() {
+        let x = Value::Bool(true);
+        let y = Value::Bool(false);
+
+        assert_eq!(x < y, false);
+        assert_eq!(x > y, true);
+        assert_eq!(x >= y, true);
+        assert_eq!(x <= y, false);
+    }
+
+    #[test]
+    fn op_add_value_number() {
+        let x = Value::Number(NumericType::Integer(5));
+        let y = Value::Number(NumericType::Integer(6));
+        let z = Value::Number(NumericType::Float(2.0));
+
+        assert_eq!(x.clone() + y, Value::Number(NumericType::Integer(11)));
+        assert_eq!(x.clone() + z, Value::Number(NumericType::Float(7.0)));
+    }
+
+    #[test]
+    fn op_bitand_value_number() {
+        let x = Value::Number(NumericType::Integer(1));
+        let y = Value::Number(NumericType::Integer(2));
+
+        assert_eq!(x & y, Value::Number(NumericType::Integer(0)))
+    }
+
+    #[test]
+    fn op_bitor_value_number() {
+        let x = Value::Number(NumericType::Integer(1));
+        let y = Value::Number(NumericType::Integer(2));
+
+        assert_eq!(x | y, Value::Number(NumericType::Integer(3)))
+    }
+
+    #[test]
+    fn op_bitxor_value_number() {
+        let x = Value::Number(NumericType::Integer(1));
+        let y = Value::Number(NumericType::Integer(2));
+
+        assert_eq!(x ^ y, Value::Number(NumericType::Integer(3)))
+    }
+
+    #[test]
+    fn op_div_value_number() {
+        let x = Value::Number(NumericType::Integer(1));
+        let y = Value::Number(NumericType::Integer(2));
+        let z = Value::Number(NumericType::Float(2.0));
+
+        assert_eq!(x.clone() / y.clone(),
+            Value::Number(NumericType::Float(0.5)));
+        assert_eq!(x.clone() / z.clone(),
+            Value::Number(NumericType::Float(0.5)));
+        assert_eq!(y.clone() / x.clone(),
+            Value::Number(NumericType::Float(2.0)));
+        assert_eq!(z.clone() / z.clone(),
+            Value::Number(NumericType::Float(1.0)));
+    }
+
+    #[test]
+    fn op_mul_value_number() {
+        let x = Value::Number(NumericType::Integer(5));
+        let y = Value::Number(NumericType::Integer(6));
+        let z = Value::Number(NumericType::Float(2.0));
+
+        assert_eq!(x.clone() * y, Value::Number(NumericType::Integer(30)));
+        assert_eq!(x.clone() * z, Value::Number(NumericType::Float(10.0)));
+    }
+
+    #[test]
+    fn op_rem_value_number() {
+        let x = Value::Number(NumericType::Integer(10));
+        let y = Value::Number(NumericType::Integer(3));
+
+        assert_eq!(x % y, Value::Number(NumericType::Integer(1)));
+    }
+
+    #[test]
+    fn op_shl_value_number() {
+        let x = Value::Number(NumericType::Integer(128));
+        let y = Value::Number(NumericType::Integer(4));
+
+        assert_eq!(x << y, Value::Number(NumericType::Integer(2048)));
+    }
+
+    #[test]
+    fn op_shr_value_number() {
+        let x = Value::Number(NumericType::Integer(64));
+        let y = Value::Number(NumericType::Integer(2));
+        let a = Value::Number(NumericType::Integer(1));
+        let b = Value::Number(NumericType::Integer(5));
+
+        assert_eq!(x >> y, Value::Number(NumericType::Integer(16)));
+        assert_eq!(a >> b, Value::Number(NumericType::Integer(0)));
+    }
+
+    #[test]
+    fn op_sub_value_number() {
+        let x = Value::Number(NumericType::Integer(5));
+        let y = Value::Number(NumericType::Integer(6));
+        let z = Value::Number(NumericType::Float(2.0));
+
+        assert_eq!(x.clone() - y, Value::Number(NumericType::Integer(-1)));
+        assert_eq!(x.clone() - z, Value::Number(NumericType::Float(3.0)));
     }
 }

@@ -2,7 +2,7 @@ use std::ops;
 
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub enum NumericType {
-    Integer(usize),
+    Integer(i32),
     Float(f32)
 }
 
@@ -38,6 +38,66 @@ impl ops::Add for NumericType {
     }
 }
 
+impl ops::BitAnd for NumericType {
+    type Output = NumericType;
+
+    fn bitand(self, other: NumericType) -> NumericType {
+        match (self, other) {
+            (NumericType::Integer(lhs), NumericType::Integer(rhs)) => {
+                NumericType::Integer(lhs & rhs)
+            },
+            _ => panic!("Bitwise AND applies to Value::Number(Integer)")
+        }
+    }
+}
+
+impl ops::BitOr for NumericType {
+    type Output = NumericType;
+
+    fn bitor(self, other: NumericType) -> NumericType {
+        match (self, other) {
+            (NumericType::Integer(lhs), NumericType::Integer(rhs)) => {
+                NumericType::Integer(lhs | rhs)
+            },
+            _ => panic!("Bitwise OR applies to Value::Number(Integer)")
+        }
+    }
+}
+
+impl ops::BitXor for NumericType {
+    type Output = NumericType;
+
+    fn bitxor(self, other: NumericType) -> NumericType {
+        match (self, other) {
+            (NumericType::Integer(lhs), NumericType::Integer(rhs)) => {
+                NumericType::Integer(lhs ^ rhs)
+            },
+            _ => panic!("Bitwise XOR applies to Value::Number(Integer)")
+        }
+    }
+}
+
+impl ops::Div for NumericType {
+    type Output = NumericType;
+
+    fn div(self, other: NumericType) -> NumericType {
+        match (self, other) {
+            (NumericType::Integer(lhs), NumericType::Integer(rhs)) => {
+                NumericType::Float(lhs as f32 / rhs as f32)
+            },
+            (NumericType::Integer(lhs), NumericType::Float(rhs)) => {
+                NumericType::Float(lhs as f32 / rhs)
+            },
+            (NumericType::Float(lhs), NumericType::Integer(rhs)) => {
+                NumericType::Float(lhs / rhs as f32)
+            },
+            (NumericType::Float(lhs), NumericType::Float(rhs)) => {
+                NumericType::Float(lhs / rhs)
+            }
+        }
+    }
+}
+
 impl ops::Mul for NumericType {
     type Output = NumericType;
 
@@ -55,6 +115,45 @@ impl ops::Mul for NumericType {
             (NumericType::Float(lhs), NumericType::Float(rhs)) => {
                 NumericType::Float(lhs * rhs)
             }
+        }
+    }
+}
+
+impl ops::Rem for NumericType {
+    type Output = NumericType;
+
+    fn rem(self, other: NumericType) -> NumericType {
+        match (self, other) {
+            (NumericType::Integer(lhs), NumericType::Integer(rhs)) => {
+                NumericType::Integer(lhs % rhs)
+            },
+            _ => unimplemented!()
+        }
+    }
+}
+
+impl ops::Shl<NumericType> for NumericType {
+    type Output = NumericType;
+
+    fn shl(self, other: NumericType) -> NumericType {
+        match (self, other) {
+            (NumericType::Integer(lhs), NumericType::Integer(rhs)) => {
+                NumericType::Integer(lhs << rhs)
+            },
+            _ => unimplemented!()
+        }
+    }
+}
+
+impl ops::Shr<NumericType> for NumericType {
+    type Output = NumericType;
+
+    fn shr(self, other: NumericType) -> NumericType {
+        match (self, other) {
+            (NumericType::Integer(lhs), NumericType::Integer(rhs)) => {
+                NumericType::Integer(lhs >> rhs)
+            },
+            _ => unimplemented!()
         }
     }
 }
