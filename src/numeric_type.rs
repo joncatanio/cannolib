@@ -1,9 +1,20 @@
 use std::ops;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub enum NumericType {
     Integer(usize),
     Float(f32)
+}
+
+impl NumericType {
+    pub fn to_bool(&self) -> bool {
+        match *self {
+            NumericType::Integer(ref val) =>
+                if *val == 0 { false } else { true },
+            NumericType::Float(ref val) =>
+                if *val == 0.0 { false } else { true }
+        }
+    }
 }
 
 impl ops::Add for NumericType {

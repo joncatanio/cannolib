@@ -1,8 +1,9 @@
 use std::ops;
+use std::cmp;
 
 use super::NumericType;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Clone)]
 pub enum Value {
     Number(NumericType),
     Str(String),
@@ -13,7 +14,48 @@ pub enum Value {
 impl Value {
     pub fn to_bool(&self) -> bool {
         match *self {
-            Value::Bool(val) => val,
+            Value::Bool(ref val)   => *val,
+            Value::Number(ref val) => val.to_bool(),
+            _ => unimplemented!()
+        }
+    }
+}
+
+impl cmp::PartialEq for Value {
+    fn eq(&self, other: &Value) -> bool {
+        match (self, other) {
+            (&Value::Number(ref val1), &Value::Number(ref val2)) => {
+                val1 == val2
+            },
+            (&Value::Number(_), &Value::None) => false,
+            (&Value::Str(ref val1), &Value::Str(ref val2)) => {
+                val1 == val2
+            },
+            (&Value::Str(_), &Value::None) => false,
+            (&Value::Bool(ref val1), &Value::Bool(ref val2)) => {
+                val1 == val2
+            }
+            (&Value::Bool(_), &Value::None) => false,
+            (&Value::None, &Value::None) => true,
+            _ => unimplemented!()
+        }
+    }
+
+    fn ne(&self, other: &Value) -> bool {
+        match (self, other) {
+            (&Value::Number(ref val1), &Value::Number(ref val2)) => {
+                val1 != val2
+            },
+            (&Value::Number(_), &Value::None) => true,
+            (&Value::Str(ref val1), &Value::Str(ref val2)) => {
+                val1 != val2
+            },
+            (&Value::Str(_), &Value::None) => true,
+            (&Value::Bool(ref val1), &Value::Bool(ref val2)) => {
+                val1 != val2
+            }
+            (&Value::Bool(_), &Value::None) => true,
+            (&Value::None, &Value::None) => false,
             _ => unimplemented!()
         }
     }
@@ -23,6 +65,7 @@ impl ops::Add for Value {
     type Output = Value;
 
     fn add(self, other: Value) -> Value {
+        // TODO match tuple (self, other) to avoid nested matching
         match self {
             Value::Number(num) => {
                 match other {
@@ -48,5 +91,53 @@ impl ops::Mul for Value {
             },
             _ => unimplemented!()
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn partial_eq_value_number() {
+        let x = Value::Number(NumericType::Integer(5));
+        let y = Value::Number(NumericType::Integer(6));
+        let none = Value::None;
+
+        assert_eq!(x == x, true);
+        assert_eq!(x == y, false);
+        assert_eq!(x != y, true);
+        assert_eq!(x == none, false);
+        assert_eq!(x != none, true);
+    }
+
+    #[test]
+    fn partial_eq_value_str() {
+        let x = Value::Str("test".to_string());
+        let y = Value::Str("word".to_string());
+
+        assert_eq!(x == x, true);
+        assert_eq!(x == y, false);
+        assert_eq!(x != y, true);
+    }
+
+    #[test]
+    fn partial_eq_value_bool() {
+        let x = Value::Bool(true);
+        let y = Value::Bool(false);
+
+        assert_eq!(x == x, true);
+        assert_eq!(x == y, false);
+        assert_eq!(x != y, true);
+    }
+
+    #[test]
+    fn partial_eq_value_none() {
+        let x = Value::Bool(true);
+        let none = Value::None;
+
+        assert_eq!(none == none, true);
+        assert_eq!(x == none, false);
+        assert_eq!(x != none, true);
     }
 }
