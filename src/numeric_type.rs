@@ -119,6 +119,28 @@ impl ops::Mul for NumericType {
     }
 }
 
+impl ops::Neg for NumericType {
+    type Output = NumericType;
+
+    fn neg(self) -> NumericType {
+        match self {
+            NumericType::Integer(val) => NumericType::Integer(-val),
+            NumericType::Float(val)   => NumericType::Float(-val)
+        }
+    }
+}
+
+impl ops::Not for NumericType {
+    type Output = NumericType;
+
+    fn not(self) -> NumericType {
+        match self {
+            NumericType::Integer(val) => NumericType::Integer(!val),
+            NumericType::Float(_)   => panic!("bad operand type for unary ~")
+        }
+    }
+}
+
 impl ops::Rem for NumericType {
     type Output = NumericType;
 

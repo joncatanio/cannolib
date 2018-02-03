@@ -14,10 +14,18 @@ pub enum Value {
 impl Value {
     pub fn to_bool(&self) -> bool {
         match *self {
-            Value::Bool(ref val)   => *val,
             Value::Number(ref val) => val.to_bool(),
-            _ => unimplemented!()
+            Value::Str(ref val) => if val.is_empty() { false } else { true },
+            Value::Bool(ref val) => *val,
+            Value::None => false
         }
+    }
+
+    // Logical NOT provided as a translation for Python's `not` keyword. Rust
+    // provides one overload NOT and cannolib has used that as Bitwise NOT.
+    // This function will always return a Value::Bool.
+    pub fn logical_not(&self) -> Value {
+        Value::Bool(!self.to_bool())
     }
 }
 
@@ -216,6 +224,33 @@ impl ops::Mul for Value {
     }
 }
 
+impl ops::Neg for Value {
+    type Output = Value;
+
+    fn neg(self) -> Value {
+        match self {
+            Value::Number(val) => Value::Number(-val),
+            Value::Bool(val) =>
+                Value::Number(NumericType::Integer(-(val as i32))),
+            _ => panic!("bad operand type for unary -"),
+        }
+    }
+}
+
+impl ops::Not for Value {
+    type Output = Value;
+
+    // Bitwise NOT, cannolib has a logical not provided as a function call
+    fn not(self) -> Value {
+        match self {
+            Value::Number(val) => Value::Number(!val),
+            Value::Bool(val) =>
+                Value::Number(NumericType::Integer(!(val as i32))),
+            _ => panic!("bad operand type for unary ~"),
+        }
+    }
+}
+
 impl ops::Rem for Value {
     type Output = Value;
 
@@ -271,6 +306,86 @@ impl ops::Sub for Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn self_to_bool_number() {
+        let a = Value::Number(NumericType::Float(1.5));
+        let b = Value::Number(NumericType::Float(0.0));
+        let x = Value::Number(NumericType::Integer(15));
+        let y = Value::Number(NumericType::Integer(0));
+        let z = Value::Number(NumericType::Integer(-1));
+
+        assert_eq!(a.to_bool(), true);
+        assert_eq!(b.to_bool(), false);
+        assert_eq!(x.to_bool(), true);
+        assert_eq!(y.to_bool(), false);
+        assert_eq!(z.to_bool(), true);
+    }
+
+    #[test]
+    fn self_to_bool_str() {
+        let x = Value::Str("".to_string());
+        let y = Value::Str("test".to_string());
+
+        assert_eq!(x.to_bool(), false);
+        assert_eq!(y.to_bool(), true);
+    }
+
+    #[test]
+    fn self_to_bool_bool() {
+        let x = Value::Bool(true);
+        let y = Value::Bool(false);
+
+        assert_eq!(x.to_bool(), true);
+        assert_eq!(y.to_bool(), false);
+    }
+
+    #[test]
+    fn self_to_bool_none() {
+        let x = Value::None;
+
+        assert_eq!(x.to_bool(), false);
+    }
+
+    #[test]
+    fn self_logical_not_number() {
+        let a = Value::Number(NumericType::Float(1.5));
+        let b = Value::Number(NumericType::Float(0.0));
+        let x = Value::Number(NumericType::Integer(15));
+        let y = Value::Number(NumericType::Integer(0));
+        let z = Value::Number(NumericType::Integer(-1));
+
+        assert_eq!(a.logical_not(), Value::Bool(false));
+        assert_eq!(b.logical_not(), Value::Bool(true));
+        assert_eq!(x.logical_not(), Value::Bool(false));
+        assert_eq!(y.logical_not(), Value::Bool(true));
+        assert_eq!(z.logical_not(), Value::Bool(false));
+    }
+
+    #[test]
+    fn self_logical_not_str() {
+        let x = Value::Str("".to_string());
+        let y = Value::Str("test".to_string());
+
+        assert_eq!(x.logical_not(), Value::Bool(true));
+        assert_eq!(y.logical_not(), Value::Bool(false));
+    }
+
+    #[test]
+    fn self_logical_not_bool() {
+        let x = Value::Bool(true);
+        let y = Value::Bool(false);
+
+        assert_eq!(x.logical_not(), Value::Bool(false));
+        assert_eq!(y.logical_not(), Value::Bool(true));
+    }
+
+    #[test]
+    fn self_logical_not_none() {
+        let x = Value::None;
+
+        assert_eq!(x.logical_not(), Value::Bool(true));
+    }
 
     #[test]
     fn partial_eq_value_number() {
@@ -406,6 +521,46 @@ mod tests {
 
         assert_eq!(x.clone() * y, Value::Number(NumericType::Integer(30)));
         assert_eq!(x.clone() * z, Value::Number(NumericType::Float(10.0)));
+    }
+
+    #[test]
+    fn op_neg_value_number() {
+        let x = Value::Number(NumericType::Integer(5));
+        let y = Value::Number(NumericType::Integer(-2));
+        let z = Value::Number(NumericType::Integer(0));
+
+        assert_eq!(-x, Value::Number(NumericType::Integer(-5)));
+        assert_eq!(-y, Value::Number(NumericType::Integer(2)));
+        assert_eq!(-z, Value::Number(NumericType::Integer(0)));
+    }
+
+    #[test]
+    fn op_neg_value_bool() {
+        let x = Value::Bool(true);
+        let y = Value::Bool(false);
+
+        assert_eq!(-x, Value::Number(NumericType::Integer(-1)));
+        assert_eq!(-y, Value::Number(NumericType::Integer(0)));
+    }
+
+    #[test]
+    fn op_not_value_number() {
+        let x = Value::Number(NumericType::Integer(5));
+        let y = Value::Number(NumericType::Integer(-2));
+        let z = Value::Number(NumericType::Integer(0));
+
+        assert_eq!(!x, Value::Number(NumericType::Integer(-6)));
+        assert_eq!(!y, Value::Number(NumericType::Integer(1)));
+        assert_eq!(!z, Value::Number(NumericType::Integer(-1)));
+    }
+
+    #[test]
+    fn op_not_value_bool() {
+        let x = Value::Bool(true);
+        let y = Value::Bool(false);
+
+        assert_eq!(!x, Value::Number(NumericType::Integer(-2)));
+        assert_eq!(!y, Value::Number(NumericType::Integer(-1)));
     }
 
     #[test]
