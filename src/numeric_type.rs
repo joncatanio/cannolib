@@ -1,4 +1,5 @@
 use std::ops;
+use std::fmt;
 
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub enum NumericType {
@@ -13,6 +14,15 @@ impl NumericType {
                 if *val == 0 { false } else { true },
             NumericType::Float(ref val) =>
                 if *val == 0.0 { false } else { true }
+        }
+    }
+}
+
+impl fmt::Display for NumericType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            NumericType::Integer(num) => write!(f, "{}", num),
+            NumericType::Float(num) => write!(f, "{}", num)
         }
     }
 }

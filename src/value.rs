@@ -1,5 +1,6 @@
 use std::ops;
 use std::cmp;
+use std::fmt;
 
 use super::NumericType;
 
@@ -8,6 +9,7 @@ pub enum Value {
     Number(NumericType),
     Str(String),
     Bool(bool),
+    Closure { f: fn(Vec<Value>) -> Value, params: Vec<String> },
     None
 }
 
@@ -17,7 +19,8 @@ impl Value {
             Value::Number(ref val) => val.to_bool(),
             Value::Str(ref val) => if val.is_empty() { false } else { true },
             Value::Bool(ref val) => *val,
-            Value::None => false
+            Value::None => false,
+            _ => unimplemented!()
         }
     }
 
@@ -26,6 +29,18 @@ impl Value {
     // This function will always return a Value::Bool.
     pub fn logical_not(&self) -> Value {
         Value::Bool(!self.to_bool())
+    }
+}
+
+impl fmt::Display for Value {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Value::Number(ref n) => write!(f, "{}", n),
+            Value::Str(ref s)    => write!(f, "{}", s),
+            Value::Bool(ref b)   => write!(f, "{}", b),
+            Value::None          => write!(f, "None"),
+            _ => unimplemented!()
+        }
     }
 }
 
@@ -153,6 +168,9 @@ impl ops::Add for Value {
         match (self, other) {
             (Value::Number(lhs), Value::Number(rhs)) => {
                 Value::Number(lhs + rhs)
+            },
+            (Value::Str(lhs), Value::Str(rhs)) => {
+                Value::Str(lhs + &rhs)
             },
             _ => unimplemented!()
         }
@@ -391,9 +409,10 @@ mod tests {
     fn partial_eq_value_number() {
         let x = Value::Number(NumericType::Integer(5));
         let y = Value::Number(NumericType::Integer(6));
+        let z = Value::Number(NumericType::Integer(5));
         let none = Value::None;
 
-        assert_eq!(x == x, true);
+        assert_eq!(x == z, true);
         assert_eq!(x == y, false);
         assert_eq!(x != y, true);
         assert_eq!(x == none, false);
@@ -471,6 +490,14 @@ mod tests {
 
         assert_eq!(x.clone() + y, Value::Number(NumericType::Integer(11)));
         assert_eq!(x.clone() + z, Value::Number(NumericType::Float(7.0)));
+    }
+
+    #[test]
+    fn op_add_value_str() {
+        let x = Value::Str("test".to_string());
+        let y = Value::Str("concat".to_string());
+
+        assert_eq!(x + y, Value::Str("testconcat".to_string()));
     }
 
     #[test]
