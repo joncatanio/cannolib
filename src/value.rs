@@ -9,7 +9,7 @@ pub enum Value {
     Number(NumericType),
     Str(String),
     Bool(bool),
-    Closure { f: fn(Vec<Value>) -> Value, params: Vec<String> },
+    Function { f: fn(Vec<Value>) -> Value },
     None
 }
 
@@ -29,6 +29,14 @@ impl Value {
     // This function will always return a Value::Bool.
     pub fn logical_not(&self) -> Value {
         Value::Bool(!self.to_bool())
+    }
+
+    /// Makes the Value a callable type, this will execute Value::Functions
+    pub fn call(&self, args: Vec<Value>) -> Value {
+        match *self {
+            Value::Function { ref f } => f(args),
+            _ => unimplemented!()
+        }
     }
 }
 
