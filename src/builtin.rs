@@ -1,7 +1,16 @@
 use super::Value;
+use std::collections::HashMap;
 
 #[allow(const_err)]
-pub static PRINT: Value = Value::Function { f: |params: Vec<Value>| -> Value {
+pub fn get_scope() -> HashMap<String, Value> {
+    let mut tbl = HashMap::new();
+    tbl.insert("print".to_string(), Value::Function { f: print });
+    tbl
+}
+
+#[allow(const_err)]
+fn print(_scope: Vec<HashMap<String, Value>>, params: Vec<Value>)
+    -> Value {
     let mut params_iter = params.iter();
     let value = params_iter.next();
 
@@ -11,4 +20,4 @@ pub static PRINT: Value = Value::Function { f: |params: Vec<Value>| -> Value {
     }
 
     Value::None
-}};
+}

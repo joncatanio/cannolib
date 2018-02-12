@@ -1,6 +1,7 @@
 use std::ops;
 use std::cmp;
 use std::fmt;
+use std::collections::HashMap;
 
 use super::NumericType;
 
@@ -9,7 +10,9 @@ pub enum Value {
     Number(NumericType),
     Str(String),
     Bool(bool),
-    Function { f: fn(Vec<Value>) -> Value },
+    // TODO add scope list to functions and call method in impl
+    Function { f: fn(Vec<HashMap<String, Value>>, Vec<Value>) -> Value },
+    Object { tbl: HashMap<String, Box<Value>> },
     None
 }
 
@@ -32,9 +35,11 @@ impl Value {
     }
 
     /// Makes the Value a callable type, this will execute Value::Functions
-    pub fn call(&self, args: Vec<Value>) -> Value {
+    pub fn call(&self, scope: Vec<HashMap<String, Value>>, args: Vec<Value>)
+        -> Value {
         match *self {
-            Value::Function { ref f } => f(args),
+            Value::Function { ref f } => f(scope, args),
+            // For objects, pass self in since it'll be a member call
             _ => unimplemented!()
         }
     }
