@@ -12,7 +12,7 @@ pub enum Value {
     Bool(bool),
     // TODO add scope list to functions and call method in impl
     Function { f: fn(Vec<HashMap<String, Value>>, Vec<Value>) -> Value },
-    Object { tbl: HashMap<String, Box<Value>> },
+    Object { class_name: String, tbl: HashMap<String, Value> },
     None
 }
 
@@ -35,12 +35,50 @@ impl Value {
     }
 
     /// Makes the Value a callable type, this will execute Value::Functions
-    pub fn call(&self, scope: Vec<HashMap<String, Value>>, args: Vec<Value>)
+    pub fn call(&self, scope: Vec<HashMap<String, Value>>, mut args: Vec<Value>)
         -> Value {
         match *self {
             Value::Function { ref f } => f(scope, args),
-            // For objects, pass self in since it'll be a member call
+            Value::Object { ref class_name, ref tbl } => {
+                if let Some(value) = tbl.get("__init__") {
+                    let mut amended_args = vec![self.clone()];
+                    amended_args.append(&mut args);
+                    value.call(scope, amended_args)
+                } else {
+                    self.clone()
+                }
+            },
             _ => unimplemented!()
+        }
+    }
+
+    pub fn call_member(&self, attr: &str, scope: Vec<HashMap<String, Value>>,
+        mut args: Vec<Value>) -> Value {
+        match *self {
+            Value::Object { ref class_name, ref tbl } => {
+                if let Some(value) = tbl.get(attr) {
+                    let mut amended_args = vec![self.clone()];
+                    amended_args.append(&mut args);
+                    value.call(scope, amended_args)
+                } else {
+                    self.clone()
+                }
+            },
+            _ => unimplemented!()
+        }
+    }
+
+    pub fn get_attr(&self, attr: &str) -> Value {
+        match *self {
+            Value::Object { ref class_name, ref tbl } => {
+                if let Some(value) = tbl.get(attr) {
+                    value.clone()
+                } else {
+                    panic!(format!("{} object has no attribute '{}'",
+                        class_name, attr))
+                }
+            }
+            _ => panic!("unsupported ")
         }
     }
 }
