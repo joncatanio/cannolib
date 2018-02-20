@@ -43,8 +43,6 @@ impl Value {
         match *self {
             Value::Function { ref f } => f(scope, args),
             Value::Class { ref tbl } => {
-                // TODO create new Value::Object, then pass a reference to the
-                // __init__function and finally return that new object.
                 let obj = Value::Object {
                     tbl: Rc::new(RefCell::new(tbl.clone()))
                 };
@@ -72,7 +70,11 @@ impl Value {
                 }
             },
             Value::Class { ref tbl } => {
-                unimplemented!()
+                if let Some(value) = tbl.get(attr) {
+                    value.clone()
+                } else {
+                    panic!(format!("class has no attribute '{}'", attr))
+                }
             },
             _ => unreachable!()
         }
@@ -86,8 +88,20 @@ impl fmt::Display for Value {
             Value::Str(ref s)    => write!(f, "{}", s),
             Value::Bool(ref b)   => write!(f, "{}", b),
             Value::None          => write!(f, "None"),
-            Value::Object { .. } => write!(f, "{:?}", self),
-            Value::Class { .. }  => write!(f, "{:?}", self),
+            Value::Object { ref tbl } => {
+                if let Some(value) = tbl.borrow().get("__class__") {
+                    write!(f, "<'{}' object at {:p}>", value, tbl)
+                } else {
+                    panic!("missing '__class__' attribute")
+                }
+            },
+            Value::Class { ref tbl } => {
+                if let Some(value) = tbl.get("__class__") {
+                    write!(f, "<'{}' class at {:p}>", value, tbl)
+                } else {
+                    panic!("missing '__class__' attribute")
+                }
+            }
             _ => unimplemented!()
         }
     }
