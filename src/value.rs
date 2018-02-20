@@ -2,6 +2,8 @@ use std::ops;
 use std::cmp;
 use std::fmt;
 use std::collections::HashMap;
+use std::rc::Rc;
+use std::cell::RefCell;
 
 use super::NumericType;
 
@@ -12,7 +14,8 @@ pub enum Value {
     Bool(bool),
     // TODO add scope list to functions and call method in impl
     Function { f: fn(Vec<HashMap<String, Value>>, Vec<Value>) -> Value },
-    Object { class_name: String, tbl: HashMap<String, Value> },
+    Class {  tbl: HashMap<String, Value> },
+    Object { tbl: Rc<RefCell<HashMap<String, Value>>> },
     None
 }
 
@@ -39,46 +42,21 @@ impl Value {
         -> Value {
         match *self {
             Value::Function { ref f } => f(scope, args),
-            Value::Object { ref class_name, ref tbl } => {
+            Value::Class { ref tbl } => {
+                // TODO create new Value::Object, then pass a reference to the
+                // __init__function and finally return that new object.
+                let obj = Value::Object {
+                    tbl: Rc::new(RefCell::new(tbl.clone()))
+                };
+
                 if let Some(value) = tbl.get("__init__") {
-                    let mut amended_args = vec![self.clone()];
+                    let mut amended_args = vec![obj.clone()];
                     amended_args.append(&mut args);
-                    value.call(scope, amended_args)
-                } else {
-                    self.clone()
+                    value.call(scope, amended_args);
                 }
+                obj
             },
             _ => unimplemented!()
-        }
-    }
-
-    pub fn call_member(&self, attr: &str, scope: Vec<HashMap<String, Value>>,
-        mut args: Vec<Value>) -> Value {
-        match *self {
-            Value::Object { ref class_name, ref tbl } => {
-                if let Some(value) = tbl.get(attr) {
-                    let mut amended_args = vec![self.clone()];
-                    amended_args.append(&mut args);
-                    value.call(scope, amended_args)
-                } else {
-                    self.clone()
-                }
-            },
-            _ => unimplemented!()
-        }
-    }
-
-    pub fn get_attr(&self, attr: &str) -> Value {
-        match *self {
-            Value::Object { ref class_name, ref tbl } => {
-                if let Some(value) = tbl.get(attr) {
-                    value.clone()
-                } else {
-                    panic!(format!("{} object has no attribute '{}'",
-                        class_name, attr))
-                }
-            }
-            _ => panic!("unsupported ")
         }
     }
 }
@@ -90,6 +68,7 @@ impl fmt::Display for Value {
             Value::Str(ref s)    => write!(f, "{}", s),
             Value::Bool(ref b)   => write!(f, "{}", b),
             Value::None          => write!(f, "None"),
+            Value::Object { .. } => write!(f, "{:?}", self),
             _ => unimplemented!()
         }
     }
