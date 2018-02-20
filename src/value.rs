@@ -92,6 +92,7 @@ impl fmt::Display for Value {
             Value::Bool(ref b)   => write!(f, "{}", b),
             Value::None          => write!(f, "None"),
             Value::Object { .. } => write!(f, "{:?}", self),
+            Value::Class { .. }  => write!(f, "{:?}", self),
             _ => unimplemented!()
         }
     }
