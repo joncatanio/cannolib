@@ -12,8 +12,8 @@ pub enum Value {
     Number(NumericType),
     Str(String),
     Bool(bool),
-    // TODO add scope list to functions and call method in impl
     Function { f: fn(Vec<HashMap<String, Value>>, Vec<Value>) -> Value },
+    // Class definitions are immutable in Cannoli
     Class {  tbl: HashMap<String, Value> },
     Object { tbl: Rc<RefCell<HashMap<String, Value>>> },
     None
@@ -57,6 +57,29 @@ impl Value {
                 obj
             },
             _ => unimplemented!()
+        }
+    }
+
+    /// Gets the value from a given attribute, if the value is one that needs
+    /// a reference that is also handled.
+    pub fn get_attr(&self, attr: &str) -> Value {
+        match *self {
+            Value::Object { ref tbl } => {
+                if let Some(value) = tbl.borrow().get(attr) {
+                    match *value {
+                        Value::Object { ref tbl } => {
+                            return Value::Object { tbl: Rc::clone(tbl) }
+                        },
+                        _ => return value.clone()
+                    }
+                } else {
+                    panic!(format!("object has no attribute '{}'", attr))
+                }
+            },
+            Value::Class { ref tbl } => {
+                unimplemented!()
+            },
+            _ => unreachable!()
         }
     }
 }

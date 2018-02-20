@@ -30,7 +30,7 @@ pub fn attr_assign(dest: Value, attr: &str, src: Value) {
         Value::Object { ref tbl } => {
             tbl.borrow_mut().insert(attr.to_string(), src);
         },
-        _ => panic!(format!("no attribute '{}' found", attr))
+        _ => panic!("cannot access attribute on primitives")
     }
 }
 
