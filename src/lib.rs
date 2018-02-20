@@ -2,9 +2,13 @@ mod value;
 pub use value::Value;
 mod numeric_type;
 pub use numeric_type::NumericType;
+mod list_type;
+pub use list_type::ListType;
 pub mod builtin;
 
 use std::collections::HashMap;
+use std::rc::Rc;
+use std::cell::RefCell;
 
 /// Looks up a value in the provided scope list. Abstracts reference logic that
 /// provides some of the more dynamic features of Python.
@@ -28,11 +32,20 @@ pub fn attr_assign(dest: Value, attr: &str, src: Value) {
     }
 }
 
+/// Creates a Value::List from a vector of values, this keeps the Cannoli
+/// output header nice and clean (no need to include Rc and RefCell)
+pub fn create_list(list: Vec<Value>) -> Value {
+    Value::List(Rc::new(RefCell::new(ListType::new(list))))
+}
+
 // If the attribute belongs to a Value::Class, the `self` value is not passed
 // through to the function call, if it's a Value::Object the value is passed.
 pub fn call_member(value: Value, attr: &str, scope: Vec<HashMap<String, Value>>,
     mut args: Vec<Value>) -> Value {
     match value {
+        Value::List(ref list) => {
+            list.borrow_mut().call(attr, args)
+        },
         Value::Class { ref tbl } => {
             if let Some(func) = tbl.get(attr) {
                 func.call(scope, args)

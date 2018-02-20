@@ -6,12 +6,14 @@ use std::rc::Rc;
 use std::cell::RefCell;
 
 use super::NumericType;
+use super::ListType;
 
 #[derive(Debug, Clone)]
 pub enum Value {
     Number(NumericType),
     Str(String),
     Bool(bool),
+    List(Rc<RefCell<ListType>>),
     Function { f: fn(Vec<HashMap<String, Value>>, Vec<Value>) -> Value },
     // Class definitions are immutable in Cannoli
     Class {  tbl: HashMap<String, Value> },
@@ -84,10 +86,16 @@ impl Value {
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Value::Number(ref n) => write!(f, "{}", n),
-            Value::Str(ref s)    => write!(f, "{}", s),
-            Value::Bool(ref b)   => write!(f, "{}", b),
-            Value::None          => write!(f, "None"),
+            Value::Number(ref n)  => write!(f, "{}", n),
+            Value::Str(ref s)     => write!(f, "{}", s),
+            Value::Bool(ref b)    => {
+                if *b {
+                    write!(f, "True")
+                } else {
+                    write!(f, "False")
+                }
+            },
+            Value::List(ref list) => write!(f, "{}", list.borrow()),
             Value::Object { ref tbl } => {
                 if let Some(value) = tbl.borrow().get("__class__") {
                     write!(f, "<'{}' object at {:p}>", value, tbl)
@@ -102,6 +110,7 @@ impl fmt::Display for Value {
                     panic!("missing '__class__' attribute")
                 }
             }
+            Value::None => write!(f, "None"),
             _ => unimplemented!()
         }
     }
