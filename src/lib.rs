@@ -5,19 +5,13 @@ pub use numeric_type::NumericType;
 pub mod builtin;
 
 use std::collections::HashMap;
-use std::rc::Rc;
 
 /// Looks up a value in the provided scope list. Abstracts reference logic that
 /// provides some of the more dynamic features of Python.
 pub fn lookup_value(scope: &Vec<HashMap<String, Value>>, name: &str) -> Value {
     for tbl in scope.iter().rev() {
         if let Some(value) = tbl.get(name) {
-            match *value {
-                Value::Object { ref tbl } => {
-                    return Value::Object { tbl: Rc::clone(tbl) }
-                },
-                _ => return value.clone()
-            }
+            return value.clone()
         }
     }
 

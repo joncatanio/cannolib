@@ -66,12 +66,7 @@ impl Value {
         match *self {
             Value::Object { ref tbl } => {
                 if let Some(value) = tbl.borrow().get(attr) {
-                    match *value {
-                        Value::Object { ref tbl } => {
-                            return Value::Object { tbl: Rc::clone(tbl) }
-                        },
-                        _ => return value.clone()
-                    }
+                    value.clone()
                 } else {
                     panic!(format!("object has no attribute '{}'", attr))
                 }
