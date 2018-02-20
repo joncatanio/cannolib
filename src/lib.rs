@@ -41,13 +41,18 @@ pub fn call_member(value: Value, attr: &str, scope: Vec<HashMap<String, Value>>,
             }
         },
         Value::Object { ref tbl } => {
-            if let Some(func) = tbl.borrow().get(attr) {
-                let mut amended_args = vec![value.clone()];
-                amended_args.append(&mut args);
-                func.call(scope, amended_args)
+            // This forces the borrowed `tbl` value to be dropped, without the
+            // .clone() on `func` this won't compile. If the func.call() was
+            // inside the if-statement we would get a runtime borrow panic.
+            let func = if let Some(func) = tbl.borrow().get(attr) {
+                func.clone()
             } else {
                 panic!(format!("'object' has no attribute '{}'", attr))
-            }
+            };
+
+            let mut amended_args = vec![value.clone()];
+            amended_args.append(&mut args);
+            func.call(scope, amended_args)
         },
         _ => unimplemented!()
     }
