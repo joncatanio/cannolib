@@ -10,8 +10,9 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use std::cell::RefCell;
 
-/// Looks up a value in the provided scope list. Abstracts reference logic that
-/// provides some of the more dynamic features of Python.
+/// Looks up a value in the provided scope list. Calling clone() on certain
+/// values like Objects and Lists will increase the reference count. This is
+/// identical to calling Rc::clone(), it just operates implicitly.
 pub fn lookup_value(scope: &Vec<HashMap<String, Value>>, name: &str) -> Value {
     for tbl in scope.iter().rev() {
         if let Some(value) = tbl.get(name) {

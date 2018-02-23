@@ -27,6 +27,7 @@ impl Value {
             Value::Number(ref val) => val.to_bool(),
             Value::Str(ref val) => if val.is_empty() { false } else { true },
             Value::Bool(ref val) => *val,
+            Value::Object { .. } => true,
             Value::None => false,
             _ => unimplemented!()
         }
