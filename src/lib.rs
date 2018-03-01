@@ -39,6 +39,14 @@ pub fn create_list(list: Vec<Value>) -> Value {
     Value::List(Rc::new(RefCell::new(ListType::new(list))))
 }
 
+/// Creates a Value::Object from a vector of values, this keeps the Cannoli
+/// output header nice and clean (no need to include Rc and RefCell)
+/// This function is used for modules created by 'import', generally objects
+/// are created in Value when a Value::Class is invoked
+pub fn create_obj(tbl: HashMap<String, Value>) -> Value {
+    Value::Object { tbl: Rc::new(RefCell::new(tbl)) }
+}
+
 // If the attribute belongs to a Value::Class, the `self` value is not passed
 // through to the function call, if it's a Value::Object the value is passed.
 pub fn call_member(value: Value, attr: &str, scope: Vec<HashMap<String, Value>>,
