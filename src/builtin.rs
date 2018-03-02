@@ -1,14 +1,15 @@
 use super::Value;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 pub fn get_scope() -> HashMap<String, Value> {
     let mut tbl = HashMap::new();
-    tbl.insert("print".to_string(), Value::Function { f: print });
-    tbl.insert("str".to_string(), Value::Function { f: py_str });
+    tbl.insert("print".to_string(), Value::Function(Rc::new(print)));
+    tbl.insert("str".to_string(), Value::Function(Rc::new(py_str)));
     tbl
 }
 
-fn print(_scope: Vec<HashMap<String, Value>>, params: Vec<Value>) -> Value {
+fn print(params: Vec<Value>) -> Value {
     let mut params_iter = params.iter();
     let value = params_iter.next();
 
@@ -20,7 +21,7 @@ fn print(_scope: Vec<HashMap<String, Value>>, params: Vec<Value>) -> Value {
     Value::None
 }
 
-pub fn py_str(_scope: Vec<HashMap<String, Value>>, params: Vec<Value>)
+pub fn py_str(params: Vec<Value>)
     -> Value {
     let mut params_iter = params.iter();
     let value = params_iter.next();

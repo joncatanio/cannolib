@@ -13,9 +13,10 @@ use std::cell::RefCell;
 /// Looks up a value in the provided scope list. Calling clone() on certain
 /// values like Objects and Lists will increase the reference count. This is
 /// identical to calling Rc::clone(), it just operates implicitly.
-pub fn lookup_value(scope: &Vec<HashMap<String, Value>>, name: &str) -> Value {
+pub fn lookup_value(scope: &Vec<Rc<RefCell<HashMap<String, Value>>>>,
+    name: &str) -> Value {
     for tbl in scope.iter().rev() {
-        if let Some(value) = tbl.get(name) {
+        if let Some(value) = tbl.borrow().get(name) {
             return value.clone()
         }
     }
@@ -49,15 +50,14 @@ pub fn create_obj(tbl: HashMap<String, Value>) -> Value {
 
 // If the attribute belongs to a Value::Class, the `self` value is not passed
 // through to the function call, if it's a Value::Object the value is passed.
-pub fn call_member(value: Value, attr: &str, scope: Vec<HashMap<String, Value>>,
-    mut args: Vec<Value>) -> Value {
+pub fn call_member(value: Value, attr: &str, mut args: Vec<Value>) -> Value {
     match value {
         Value::List(ref list) => {
             list.borrow_mut().call(attr, args)
         },
         Value::Class { ref tbl } => {
             if let Some(func) = tbl.get(attr) {
-                func.call(scope, args)
+                func.call(args)
             } else {
                 panic!(format!("'class' has no attribute '{}'", attr))
             }
@@ -74,7 +74,7 @@ pub fn call_member(value: Value, attr: &str, scope: Vec<HashMap<String, Value>>,
 
             let mut amended_args = vec![value.clone()];
             amended_args.append(&mut args);
-            func.call(scope, amended_args)
+            func.call(amended_args)
         },
         _ => unimplemented!()
     }

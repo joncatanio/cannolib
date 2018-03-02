@@ -8,15 +8,15 @@ use std::cell::RefCell;
 use super::NumericType;
 use super::ListType;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Value {
     Number(NumericType),
     Str(String),
     Bool(bool),
     List(Rc<RefCell<ListType>>),
-    Function { f: fn(Vec<HashMap<String, Value>>, Vec<Value>) -> Value },
+    Function(Rc<Fn(Vec<Value>) -> Value>),
     // Class definitions are immutable in Cannoli
-    Class {  tbl: HashMap<String, Value> },
+    Class { tbl: HashMap<String, Value> },
     Object { tbl: Rc<RefCell<HashMap<String, Value>>> },
     None
 }
@@ -41,10 +41,10 @@ impl Value {
     }
 
     /// Makes the Value a callable type, this will execute Value::Functions
-    pub fn call(&self, scope: Vec<HashMap<String, Value>>, mut args: Vec<Value>)
+    pub fn call(&self, mut args: Vec<Value>)
         -> Value {
         match *self {
-            Value::Function { ref f } => f(scope, args),
+            Value::Function(ref f) => f(args),
             Value::Class { ref tbl } => {
                 let obj = Value::Object {
                     tbl: Rc::new(RefCell::new(tbl.clone()))
@@ -53,7 +53,7 @@ impl Value {
                 if let Some(value) = tbl.get("__init__") {
                     let mut amended_args = vec![obj.clone()];
                     amended_args.append(&mut args);
-                    value.call(scope, amended_args);
+                    value.call(amended_args);
                 }
                 obj
             },
@@ -84,7 +84,7 @@ impl Value {
     }
 }
 
-impl fmt::Display for Value {
+impl fmt::Debug for Value {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             Value::Number(ref n)  => write!(f, "{}", n),
@@ -97,6 +97,7 @@ impl fmt::Display for Value {
                 }
             },
             Value::List(ref list) => write!(f, "{}", list.borrow()),
+            Value::Function(_) => write!(f, "<cannoli function>"),
             Value::Object { ref tbl } => {
                 if let Some(value) = tbl.borrow().get("__class__") {
                     write!(f, "<'{}' object at {:p}>", value, tbl)
@@ -112,7 +113,39 @@ impl fmt::Display for Value {
                 }
             }
             Value::None => write!(f, "None"),
-            _ => unimplemented!()
+        }
+    }
+}
+
+impl fmt::Display for Value {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Value::Number(ref n)  => write!(f, "{}", n),
+            Value::Str(ref s)     => write!(f, "{}", s),
+            Value::Bool(ref b)    => {
+                if *b {
+                    write!(f, "True")
+                } else {
+                    write!(f, "False")
+                }
+            },
+            Value::List(ref list) => write!(f, "{}", list.borrow()),
+            Value::Function(_) => write!(f, "<cannoli function>"),
+            Value::Object { ref tbl } => {
+                if let Some(value) = tbl.borrow().get("__class__") {
+                    write!(f, "<'{}' object at {:p}>", value, tbl)
+                } else {
+                    panic!("missing '__class__' attribute")
+                }
+            },
+            Value::Class { ref tbl } => {
+                if let Some(value) = tbl.get("__class__") {
+                    write!(f, "<'{}' class at {:p}>", value, tbl)
+                } else {
+                    panic!("missing '__class__' attribute")
+                }
+            }
+            Value::None => write!(f, "None"),
         }
     }
 }
