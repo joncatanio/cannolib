@@ -34,18 +34,30 @@ pub fn attr_assign(dest: Value, attr: &str, src: Value) {
     }
 }
 
-/// Creates a Value::List from a vector of values, this keeps the Cannoli
-/// output header nice and clean (no need to include Rc and RefCell)
-pub fn create_list(list: Vec<Value>) -> Value {
-    Value::List(Rc::new(RefCell::new(ListType::new(list))))
-}
+/// Takes an object and a list of (names, aliases) and deconstructs the object
+/// into a HashMap will be merged into the local scope list. If None is passed
+/// into the 'members' parameter the entire object is mapped.
+pub fn split_object(object: Value, members: Option<Vec<(String, String)>>)
+    -> HashMap<String, Value> {
+    let mut map: HashMap<String, Value> = HashMap::new();
+    let tbl = match object {
+        Value::Object { ref tbl } => tbl,
+        _ => panic!("Value is not 'object'")
+    };
 
-/// Creates a Value::Object from a vector of values, this keeps the Cannoli
-/// output header nice and clean (no need to include Rc and RefCell)
-/// This function is used for modules created by 'import', generally objects
-/// are created in Value when a Value::Class is invoked
-pub fn create_obj(tbl: HashMap<String, Value>) -> Value {
-    Value::Object { tbl: Rc::new(RefCell::new(tbl)) }
+    if let Some(members) = members {
+        for member in members.iter() {
+            let value = match tbl.borrow().get(&member.0) {
+                Some(value) => value.clone(),
+                None => panic!(format!("no member '{}' found", member.0))
+            };
+
+            map.insert(member.1.clone(), value);
+        }
+        map
+    } else {
+        tbl.borrow().clone()
+    }
 }
 
 // If the attribute belongs to a Value::Class, the `self` value is not passed
