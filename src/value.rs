@@ -50,6 +50,17 @@ impl Value {
         }
     }
 
+    /// Used for Value::List to support Python list indexing
+    pub fn slice(&self, lower: Option<Value>, upper: Option<Value>,
+        step: Option<Value>) -> Value {
+        match *self {
+            Value::List(ref list) => {
+                list.borrow().slice(lower, upper, step)
+            },
+            _ => panic!("value not subscriptable")
+        }
+    }
+
     /// Makes the Value a callable type, this will execute Value::Functions
     pub fn call(&self, mut args: Vec<Value>)
         -> Value {
