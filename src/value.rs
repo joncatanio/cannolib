@@ -40,6 +40,16 @@ impl Value {
         Value::Bool(!self.to_bool())
     }
 
+    /// Used for Value::List to support Python list indexing
+    pub fn index(&self, index: Value) -> Value {
+        match *self {
+            Value::List(ref list) => {
+                list.borrow().index(index)
+            },
+            _ => panic!("value not subscriptable")
+        }
+    }
+
     /// Makes the Value a callable type, this will execute Value::Functions
     pub fn call(&self, mut args: Vec<Value>)
         -> Value {

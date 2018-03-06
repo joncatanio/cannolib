@@ -1,6 +1,7 @@
 use std::fmt;
 
 use super::Value;
+use super::NumericType;
 
 #[derive(Debug, Clone)]
 pub struct ListType {
@@ -10,6 +11,25 @@ pub struct ListType {
 impl ListType {
     pub fn new(list: Vec<Value>) -> ListType {
         ListType { list }
+    }
+
+    pub fn index(&self, index: Value) -> Value {
+        let pos = match index {
+            Value::Number(NumericType::Integer(pos)) => pos,
+            _ => panic!("list indices must be integers or slices")
+        };
+
+        if pos.abs() as usize >= self.list.len() {
+            panic!("list index out of range")
+        }
+
+        let pos: usize = if pos < 0 {
+            self.list.len() - pos.abs() as usize
+        } else {
+            pos as usize
+        };
+
+        self.list[pos].clone()
     }
 
     pub fn call(&mut self, attr: &str, args: Vec<Value>) -> Value {
