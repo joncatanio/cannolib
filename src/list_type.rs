@@ -48,36 +48,85 @@ impl ListType {
     /// reference: https://stackoverflow.com/a/509295
     pub fn slice(&self, lower: Option<Value>, upper: Option<Value>,
         step: Option<Value>) -> Value {
+        let step = match step {
+            Some(Value::Number(NumericType::Integer(step))) => {
+                if step == 0 {
+                    panic!("slice step cannot be zero")
+                } else {
+                    step
+                }
+            },
+            Some(Value::None) => 1,
+            None => 1,
+            _ => panic!("slice indices must be integers or None")
+        };
         let (lower, upper) = match (lower, upper) {
             (Some(Value::Number(NumericType::Integer(lower))),
              Some(Value::Number(NumericType::Integer(upper)))) => {
                 let lower = calculate_slice(lower, self.list.len());
                 let upper = calculate_slice(upper, self.list.len());
-                (lower, upper)
+                (Some(lower), Some(upper))
             },
             (Some(Value::Number(NumericType::Integer(lower))), None) |
             (Some(Value::Number(NumericType::Integer(lower))),
              Some(Value::None)) => {
-                (calculate_slice(lower, self.list.len()), self.list.len())
+                (Some(calculate_slice(lower, self.list.len())), None)
             },
             (None, Some(Value::Number(NumericType::Integer(upper)))) |
             (Some(Value::None), Some(Value::Number(NumericType::
              Integer(upper)))) => {
-                (0, calculate_slice(upper, self.list.len()))
+                (None, Some(calculate_slice(upper, self.list.len())))
             },
             (None, None) | (Some(Value::None), Some(Value::None)) => {
-                (0, self.list.len())
+                (None, None)
             },
             _ => panic!("slice indices must be integers or None")
         };
 
-        let list_type = if lower >= upper {
-            ListType::new(vec![])
+        let list = if step < 0 {
+            let list: Vec<Value> = self.list.clone().into_iter()
+                .rev().collect();
+            // invert lower and upper to apply to the reverse
+            let lower = match lower {
+                Some(val) => self.list.len() - val - 1,
+                None => 0
+            };
+            let upper = match upper {
+                Some(val) => self.list.len() - val - 1,
+                None => self.list.len()
+            };
+
+            if lower >= upper {
+                vec![]
+            } else {
+                (&list[lower..upper]).to_vec().iter()
+                    .enumerate()
+                    .filter(|elem| elem.0 % (step.abs() as usize) == 0)
+                    .map(|elem| elem.1.clone())
+                    .collect()
+            }
         } else {
-            ListType::new((&self.list[lower..upper]).to_vec())
+            let lower = match lower {
+                Some(val) => val,
+                None => 0
+            };
+            let upper = match upper {
+                Some(val) => val,
+                None => self.list.len()
+            };
+
+            if lower >= upper {
+                vec![]
+            } else {
+                (&self.list[lower..upper]).to_vec().iter()
+                    .enumerate()
+                    .filter(|elem| elem.0 % (step as usize) == 0)
+                    .map(|elem| elem.1.clone())
+                    .collect()
+            }
         };
 
-        Value::List(Rc::new(RefCell::new(list_type)))
+        Value::List(Rc::new(RefCell::new(ListType::new(list))))
     }
 
     pub fn call(&mut self, attr: &str, args: Vec<Value>) -> Value {
