@@ -48,6 +48,7 @@ impl ListType {
     /// reference: https://stackoverflow.com/a/509295
     pub fn slice(&self, lower: Option<Value>, upper: Option<Value>,
         step: Option<Value>) -> Value {
+        //println!("* LOWER: {:?} UPPER: {:?} STEP: {:?}", lower, upper, step);
         let step = match step {
             Some(Value::Number(NumericType::Integer(step))) => {
                 if step == 0 {
@@ -60,59 +61,50 @@ impl ListType {
             None => 1,
             _ => panic!("slice indices must be integers or None")
         };
-        let (lower, upper) = match (lower, upper) {
-            (Some(Value::Number(NumericType::Integer(lower))),
-             Some(Value::Number(NumericType::Integer(upper)))) => {
-                let lower = calculate_slice(lower, self.list.len());
-                let upper = calculate_slice(upper, self.list.len());
-                (Some(lower), Some(upper))
-            },
-            (Some(Value::Number(NumericType::Integer(lower))), None) |
-            (Some(Value::Number(NumericType::Integer(lower))),
-             Some(Value::None)) => {
-                (Some(calculate_slice(lower, self.list.len())), None)
-            },
-            (None, Some(Value::Number(NumericType::Integer(upper)))) |
-            (Some(Value::None), Some(Value::Number(NumericType::
-             Integer(upper)))) => {
-                (None, Some(calculate_slice(upper, self.list.len())))
-            },
-            (None, None) | (Some(Value::None), Some(Value::None)) => {
-                (None, None)
-            },
-            _ => panic!("slice indices must be integers or None")
-        };
-
+        //println!("** LOWER: {:?} UPPER: {:?} STEP: {:?}", lower, upper, step);
         let list = if step < 0 {
-            let list: Vec<Value> = self.list.clone().into_iter()
-                .rev().collect();
-            // invert lower and upper to apply to the reverse
             let lower = match lower {
-                Some(val) => self.list.len() - val - 1,
-                None => 0
+                Some(Value::Number(NumericType::Integer(lower))) =>
+                    calculate_slice(lower, 0, self.list.len() as i32),
+                None => self.list.len() as i32,
+                _ => panic!("slice indices must be integers or None")
             };
             let upper = match upper {
-                Some(val) => self.list.len() - val - 1,
-                None => self.list.len()
+                Some(Value::Number(NumericType::Integer(upper))) =>
+                    calculate_slice(upper, -1, self.list.len() as i32),
+                None => -1,
+                _ => panic!("slice indices must be integers or None")
             };
 
-            if lower >= upper {
-                vec![]
-            } else {
-                (&list[lower..upper]).to_vec().iter()
-                    .enumerate()
+            if lower > upper {
+                let temp = lower;
+                let lower = (upper + 1) as usize;
+                let upper = if temp == self.list.len() as i32 { temp as usize }
+                    else { (temp + 1) as usize };
+
+                //println!("*** LOWER: {:?} UPPER: {:?} STEP: {:?}", lower, upper, step);
+                let list: Vec<Value> = (&self.list[lower..upper]).to_vec()
+                    .iter().map(|val| val.clone()).collect();
+
+                list.iter().rev().enumerate()
                     .filter(|elem| elem.0 % (step.abs() as usize) == 0)
                     .map(|elem| elem.1.clone())
                     .collect()
+            } else {
+                vec![]
             }
         } else {
             let lower = match lower {
-                Some(val) => val,
-                None => 0
+                Some(Value::Number(NumericType::Integer(lower))) =>
+                    calculate_slice(lower, 0, self.list.len() as i32) as usize,
+                None => 0,
+                _ => panic!("slice indices must be integers or None")
             };
             let upper = match upper {
-                Some(val) => val,
-                None => self.list.len()
+                Some(Value::Number(NumericType::Integer(upper))) =>
+                    calculate_slice(upper, 0, self.list.len() as i32) as usize,
+                None => self.list.len(),
+                _ => panic!("slice indices must be integers or None")
             };
 
             if lower >= upper {
@@ -166,20 +158,20 @@ impl fmt::Display for ListType {
     }
 }
 
-/// Takes an index and a list length and calculates the proper usize index,
+/// Takes an index and lower/upper bounds and calculates the proper index,
 /// this is necessary since Python allows for negative indexes/slices.
-fn calculate_slice(index: i32, len: usize) -> usize {
+fn calculate_slice(index: i32, lower: i32, upper: i32) -> i32 {
     if index < 0 {
-        if index.abs() as usize >= len {
-            0
+        if index.abs() >= upper {
+            lower
         } else {
-            len - index.abs() as usize
+            upper - index.abs()
         }
     } else {
-        if index as usize >= len {
-            len
+        if index >= upper{
+            upper
         } else {
-            index as usize
+            index
         }
     }
 }
