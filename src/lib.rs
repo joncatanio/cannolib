@@ -4,6 +4,8 @@ mod numeric_type;
 pub use numeric_type::NumericType;
 mod list_type;
 pub use list_type::ListType;
+mod tuple_type;
+pub use tuple_type::TupleType;
 pub mod builtin;
 
 use std::collections::HashMap;

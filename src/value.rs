@@ -7,6 +7,7 @@ use std::cell::RefCell;
 
 use super::NumericType;
 use super::ListType;
+use super::TupleType;
 
 #[derive(Clone)]
 pub enum Value {
@@ -14,6 +15,7 @@ pub enum Value {
     Str(String),
     Bool(bool),
     List(Rc<RefCell<ListType>>),
+    Tuple(TupleType),
     Function(Rc<Fn(Vec<Value>) -> Value>),
     // Class definitions are immutable in Cannoli
     Class { tbl: HashMap<String, Value> },
@@ -25,8 +27,9 @@ impl Value {
     pub fn to_bool(&self) -> bool {
         match *self {
             Value::Number(ref val) => val.to_bool(),
-            Value::Str(ref val) => if val.is_empty() { false } else { true },
+            Value::Str(ref val) => !val.is_empty(),
             Value::Bool(ref val) => *val,
+            Value::List(ref list) => list.borrow().to_bool(),
             Value::Object { .. } => true,
             Value::None => false,
             _ => unimplemented!()
@@ -43,9 +46,8 @@ impl Value {
     /// Used for Value::List to support Python list indexing
     pub fn index(&self, index: Value) -> Value {
         match *self {
-            Value::List(ref list) => {
-                list.borrow().index(index)
-            },
+            Value::List(ref list) => list.borrow().index(index),
+            Value::Tuple(ref tup) => tup.index(index),
             _ => panic!("value not subscriptable")
         }
     }
@@ -54,9 +56,8 @@ impl Value {
     pub fn slice(&self, lower: Option<Value>, upper: Option<Value>,
         step: Option<Value>) -> Value {
         match *self {
-            Value::List(ref list) => {
-                list.borrow().slice(lower, upper, step)
-            },
+            Value::List(ref list) => list.borrow().slice(lower, upper, step),
+            Value::Tuple(ref tup) => tup.slice(lower, upper, step),
             _ => panic!("value not subscriptable")
         }
     }
@@ -118,6 +119,7 @@ impl fmt::Debug for Value {
                 }
             },
             Value::List(ref list) => write!(f, "{}", list.borrow()),
+            Value::Tuple(ref tup) => write!(f, "{}", tup),
             Value::Function(_) => write!(f, "<cannoli function>"),
             Value::Object { ref tbl } => {
                 if let Some(value) = tbl.borrow().get("__class__") {
@@ -151,6 +153,7 @@ impl fmt::Display for Value {
                 }
             },
             Value::List(ref list) => write!(f, "{}", list.borrow()),
+            Value::Tuple(ref tup) => write!(f, "{}", tup),
             Value::Function(_) => write!(f, "<cannoli function>"),
             Value::Object { ref tbl } => {
                 if let Some(value) = tbl.borrow().get("__class__") {
