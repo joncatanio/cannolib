@@ -62,6 +62,16 @@ impl Value {
         }
     }
 
+    /// Clones the inner sequence of tuples and lists, this is to iterate
+    /// lists and tuples in a for-loop
+    pub fn clone_seq(&self) -> Vec<Value> {
+        match *self {
+            Value::List(ref list) => list.borrow().clone_seq(),
+            Value::Tuple(ref tup) => tup.clone_seq(),
+            _ => panic!("value not iterable")
+        }
+    }
+
     /// Makes the Value a callable type, this will execute Value::Functions
     pub fn call(&self, mut args: Vec<Value>)
         -> Value {

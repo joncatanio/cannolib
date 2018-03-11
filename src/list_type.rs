@@ -122,6 +122,10 @@ impl ListType {
         Value::List(Rc::new(RefCell::new(ListType::new(list))))
     }
 
+    pub fn clone_seq(&self) -> Vec<Value> {
+        self.list.clone()
+    }
+
     pub fn call(&mut self, attr: &str, args: Vec<Value>) -> Value {
         match attr {
             "append" => self.append(args),

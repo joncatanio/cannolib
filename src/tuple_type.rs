@@ -115,6 +115,10 @@ impl TupleType {
 
         Value::Tuple(TupleType::new(list))
     }
+
+    pub fn clone_seq(&self) -> Vec<Value> {
+        self.list.clone()
+    }
 }
 
 impl fmt::Display for TupleType {
