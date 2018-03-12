@@ -152,13 +152,25 @@ impl fmt::Display for ListType {
         output.push_str("[");
         if let Some(value) = list_iter.next() {
             match *value {
-                Value::Str(_) => output.push_str(&format!("'{}'", value)),
+                Value::Str(ref s) => {
+                    if s.contains("'") {
+                        output.push_str(&format!("\"{}\"", value))
+                    } else {
+                        output.push_str(&format!("'{}'", value))
+                    }
+                },
                 _ => output.push_str(&format!("{}", value))
             }
 
             for value in list_iter {
                 match *value {
-                    Value::Str(_) => output.push_str(&format!(", '{}'", value)),
+                    Value::Str(ref s) => {
+                        if s.contains("'") {
+                            output.push_str(&format!(", \"{}\"", value))
+                        } else {
+                            output.push_str(&format!(", '{}'", value))
+                        }
+                    },
                     _ => output.push_str(&format!(", {}", value))
                 }
             }

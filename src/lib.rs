@@ -66,6 +66,19 @@ pub fn split_object(object: Value, members: Option<Vec<(String, String)>>)
 // through to the function call, if it's a Value::Object the value is passed.
 pub fn call_member(value: Value, attr: &str, mut args: Vec<Value>) -> Value {
     match value {
+        Value::Str(ref string) => {
+            // TODO make a string library and write all string methods there
+            match attr {
+                "split" => {
+                    // TODO consider function args
+                    let strings = string.split(" ").collect::<Vec<&str>>();
+                    let vec: Vec<Value> = strings.iter()
+                        .map(|s| Value::Str(s.to_string())).collect();
+                    Value::List(Rc::new(RefCell::new(ListType::new(vec))))
+                },
+                _ => panic!(format!("'str' has no attribute '{}'", attr))
+            }
+        },
         Value::List(ref list) => {
             list.borrow_mut().call(attr, args)
         },
