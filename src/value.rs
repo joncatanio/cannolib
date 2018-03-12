@@ -251,7 +251,7 @@ impl cmp::PartialOrd for Value {
             (&Value::Bool(ref val1), &Value::Bool(ref val2)) => {
                 val1 < val2
             },
-            _ => unimplemented!()
+            _ => panic!("operation '<' not supported between these values")
         }
     }
 
@@ -266,7 +266,7 @@ impl cmp::PartialOrd for Value {
             (&Value::Bool(ref val1), &Value::Bool(ref val2)) => {
                 val1 <= val2
             },
-            _ => unimplemented!()
+            _ => panic!("operation '<=' not supported between these values")
         }
     }
 
@@ -281,7 +281,7 @@ impl cmp::PartialOrd for Value {
             (&Value::Bool(ref val1), &Value::Bool(ref val2)) => {
                 val1 > val2
             },
-            _ => unimplemented!()
+            _ => panic!("operation '>' not supported between these values")
         }
     }
 
@@ -296,7 +296,7 @@ impl cmp::PartialOrd for Value {
             (&Value::Bool(ref val1), &Value::Bool(ref val2)) => {
                 val1 >= val2
             },
-            _ => unimplemented!()
+            _ => panic!("operation '>=' not supported between these values")
         }
     }
 }

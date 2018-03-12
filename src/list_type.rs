@@ -38,6 +38,29 @@ impl ListType {
         self.list[pos].clone()
     }
 
+    /// Returns the length of the list
+    pub fn len(&self) -> Value {
+        Value::Number(NumericType::Integer(self.list.len() as i32))
+    }
+
+    /// Returns minimum element in sequence, will fail if elements in sequence
+    /// vary in type.
+    pub fn min(&self) -> Value {
+        if self.list.is_empty() {
+            panic!("min() arg is an empty sequence")
+        }
+        let mut iter = self.list.iter();
+        let mut min_val = iter.next().unwrap();
+
+        for value in iter {
+            if value < min_val {
+                min_val = value
+            }
+        }
+
+        min_val.clone()
+    }
+
     /// Replicates Python3's slicing feature
     ///
     /// a[start:end] # items start through end-1

@@ -1,7 +1,8 @@
 use std::ops;
+use std::cmp;
 use std::fmt;
 
-#[derive(Debug, PartialEq, PartialOrd, Clone)]
+#[derive(Debug, Clone)]
 pub enum NumericType {
     Integer(i32),
     Float(f32)
@@ -23,6 +24,61 @@ impl fmt::Display for NumericType {
         match *self {
             NumericType::Integer(num) => write!(f, "{}", num),
             NumericType::Float(num) => write!(f, "{}", num)
+        }
+    }
+}
+
+impl cmp::PartialEq for NumericType {
+    fn eq(&self, other: &NumericType) -> bool {
+        match (self, other) {
+            (&NumericType::Integer(val1), &NumericType::Integer(val2)) => {
+                val1 == val2
+            },
+            (&NumericType::Integer(val1), &NumericType::Float(val2)) => {
+                (val1 as f32) == val2
+            },
+            (&NumericType::Float(val1), &NumericType::Integer(val2)) => {
+                val1 == (val2 as f32)
+            },
+            (&NumericType::Float(val1), &NumericType::Float(val2)) => {
+                val1 == val2
+            }
+        }
+    }
+
+    fn ne(&self, other: &NumericType) -> bool {
+        match (self, other) {
+            (&NumericType::Integer(val1), &NumericType::Integer(val2)) => {
+                val1 != val2
+            },
+            (&NumericType::Integer(val1), &NumericType::Float(val2)) => {
+                (val1 as f32) != val2
+            },
+            (&NumericType::Float(val1), &NumericType::Integer(val2)) => {
+                val1 != (val2 as f32)
+            },
+            (&NumericType::Float(val1), &NumericType::Float(val2)) => {
+                val1 != val2
+            }
+        }
+    }
+}
+
+impl cmp::PartialOrd for NumericType {
+    fn partial_cmp(&self, other: &NumericType) -> Option<cmp::Ordering> {
+        match (self, other) {
+            (&NumericType::Integer(val1), &NumericType::Integer(val2)) => {
+                val1.partial_cmp(&val2)
+            },
+            (&NumericType::Integer(val1), &NumericType::Float(val2)) => {
+                (val1 as f32).partial_cmp(&val2)
+            },
+            (&NumericType::Float(val1), &NumericType::Integer(val2)) => {
+                val1.partial_cmp(&(val2 as f32))
+            },
+            (&NumericType::Float(val1), &NumericType::Float(val2)) => {
+                val1.partial_cmp(&val2)
+            }
         }
     }
 }
