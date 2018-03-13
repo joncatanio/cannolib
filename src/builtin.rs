@@ -12,6 +12,7 @@ pub fn get_scope() -> HashMap<String, Value> {
     tbl.insert("str".to_string(), Value::Function(Rc::new(py_str)));
     tbl.insert("len".to_string(), Value::Function(Rc::new(len)));
     tbl.insert("min".to_string(), Value::Function(Rc::new(min)));
+    tbl.insert("int".to_string(), Value::Function(Rc::new(int)));
     tbl.insert("float".to_string(), Value::Function(Rc::new(float)));
     tbl.insert("enumerate".to_string(), Value::Function(Rc::new(enumerate)));
     tbl
@@ -93,6 +94,30 @@ pub fn min(params: Vec<Value>) -> Value {
         }
 
         min_val.clone()
+    }
+}
+
+// TODO implement base keyword arg
+pub fn int(params:Vec<Value>) -> Value {
+    if params.is_empty() {
+        return Value::Number(NumericType::Integer(0))
+    }
+    let mut params_iter = params.iter();
+    let value = params_iter.next().unwrap();
+
+    match *value {
+        Value::Str(ref string) => {
+            if let Ok(val) = string.trim().parse::<i32>() {
+                Value::Number(NumericType::Integer(val))
+            } else {
+                panic!("could not convert string to int")
+            }
+        },
+        Value::Number(NumericType::Integer(_)) => value.clone(),
+        Value::Number(NumericType::Float(val)) => {
+            Value::Number(NumericType::Integer(val as i32))
+        },
+        _ => panic!("int() argument must be a string or a number")
     }
 }
 
