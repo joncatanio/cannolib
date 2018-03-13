@@ -1,7 +1,10 @@
 use super::Value;
 use super::NumericType;
+use super::ListType;
+use super::TupleType;
 use std::collections::HashMap;
 use std::rc::Rc;
+use std::cell::RefCell;
 
 pub fn get_scope() -> HashMap<String, Value> {
     let mut tbl = HashMap::new();
@@ -10,6 +13,7 @@ pub fn get_scope() -> HashMap<String, Value> {
     tbl.insert("len".to_string(), Value::Function(Rc::new(len)));
     tbl.insert("min".to_string(), Value::Function(Rc::new(min)));
     tbl.insert("float".to_string(), Value::Function(Rc::new(float)));
+    tbl.insert("enumerate".to_string(), Value::Function(Rc::new(enumerate)));
     tbl
 }
 
@@ -18,10 +22,15 @@ fn print(params: Vec<Value>) -> Value {
     let value = params_iter.next();
 
     match value {
-        Some(val) => println!("{}", val),
-        None => println!()
+        Some(val) => print!("{}", val),
+        None => ()
     }
 
+    for value in params_iter {
+        print!(" {}", value)
+    }
+
+    println!();
     Value::None
 }
 
@@ -119,4 +128,61 @@ pub fn float(params: Vec<Value>) -> Value {
         Value::Number(NumericType::Float(_)) => value.clone(),
         _ => panic!("float() argument must be a string or a number")
     }
+}
+
+/// This function is currently very different from the Python3 implementation
+/// it is not a generator. It will output a Value::List instead of an enumerate
+/// object that calls the iterable's '__next__' function. Ideally it will be
+/// changed to function like Python3.
+pub fn enumerate(params: Vec<Value>) -> Value {
+    if params.is_empty() {
+        panic!("enumerate() takes at most 2 arguments, 0 were given")
+    }
+    let mut params_iter = params.iter();
+    let value = params_iter.next().unwrap();
+    let mut start: i32 = if let Some(val) = params_iter.next() {
+        match *val {
+            Value::Number(NumericType::Integer(i)) => i,
+            _ => panic!("enumerate() 'start' must be integer")
+        }
+    } else {
+        0
+    };
+
+    let vec: Vec<Value> = match *value {
+        Value::Str(ref string) => {
+            string.chars().map(|c| {
+                let tup = Value::Tuple(TupleType::new(vec![
+                    Value::Number(NumericType::Integer(start)),
+                    Value::Str(c.to_string())
+                ]));
+                start += 1;
+                tup
+            }).collect()
+        },
+        Value::List(ref list) => {
+            list.borrow().clone_seq().iter().map(|x| {
+                let tup = Value::Tuple(TupleType::new(vec![
+                    Value::Number(NumericType::Integer(start)),
+                    x.clone()
+                ]));
+                start += 1;
+                tup
+            }).collect()
+
+        },
+        Value::Tuple(ref tup) => {
+            tup.clone_seq().iter().map(|x| {
+                let tup = Value::Tuple(TupleType::new(vec![
+                    Value::Number(NumericType::Integer(start)),
+                    x.clone()
+                ]));
+                start += 1;
+                tup
+            }).collect()
+        },
+        _ => panic!("enumerate() value not iterable")
+    };
+
+    Value::List(Rc::new(RefCell::new(ListType::new(vec))))
 }
