@@ -62,6 +62,14 @@ impl Value {
         }
     }
 
+    pub fn pow(&self, value: &Value) -> Value {
+        match (self, value) {
+            (&Value::Number(ref val1), &Value::Number(ref val2)) =>
+                Value::Number(val1.pow(val2)),
+            _ => panic!("pow() unsupported for specified values")
+        }
+    }
+
     /// This provides support for Python's 'in' functionality
     pub fn contained_in(&self, iterable: &Value) -> bool {
         match *iterable {

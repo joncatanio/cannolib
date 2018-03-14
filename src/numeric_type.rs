@@ -17,6 +17,39 @@ impl NumericType {
                 if *val == 0.0 { false } else { true }
         }
     }
+
+    pub fn pow(&self, num: &NumericType) -> NumericType {
+        match (self, num) {
+            (&NumericType::Integer(val1), &NumericType::Integer(val2)) => {
+                if val2 < 0 {
+                    NumericType::Float(1.0 / val1.pow(val2.abs() as u32) as f32)
+                } else {
+                    NumericType::Integer(val1.pow(val2 as u32))
+                }
+            },
+            (&NumericType::Integer(val1), &NumericType::Float(val2)) => {
+                if val2 < 0.0 {
+                    NumericType::Float(1.0 / (val1 as f32).powf(val2.abs()))
+                } else {
+                    NumericType::Float((val1 as f32).powf(val2))
+                }
+            },
+            (&NumericType::Float(val1), &NumericType::Integer(val2)) => {
+                if val2 < 0 {
+                    NumericType::Float(1.0 / val1.powi(val2.abs()))
+                } else {
+                    NumericType::Float(val1.powi(val2))
+                }
+            },
+            (&NumericType::Float(val1), &NumericType::Float(val2)) => {
+                if val2 < 0.0 {
+                    NumericType::Float(1.0 / val1.powf(val2.abs()))
+                } else {
+                    NumericType::Float(val1.powf(val2))
+                }
+            }
+        }
+    }
 }
 
 impl fmt::Display for NumericType {
