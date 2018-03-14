@@ -62,6 +62,39 @@ impl Value {
         }
     }
 
+    /// This provides support for Python's 'in' functionality
+    pub fn contained_in(&self, iterable: &Value) -> bool {
+        match *iterable {
+            Value::List(ref list) => list.borrow().contains(self),
+            Value::Tuple(ref tup) => tup.contains(self),
+            Value::Str(ref s) => {
+                let substr = match *self {
+                    Value::Str(ref substr) => substr,
+                    _ => panic!("in '<string>' string required as left operand")
+                };
+                s.contains(substr)
+            },
+            _ => panic!("value is not iterable")
+        }
+    }
+
+    /// Providing this method because the compiled output is a little
+    /// complicated and negating 'contained_in' is a bit more complicated
+    pub fn not_contained_in(&self, iterable: &Value) -> bool {
+        match *iterable {
+            Value::List(ref list) => !(list.borrow().contains(self)),
+            Value::Tuple(ref tup) => !(tup.contains(self)),
+            Value::Str(ref s) => {
+                let substr = match *self {
+                    Value::Str(ref substr) => substr,
+                    _ => panic!("in '<string>' string required as left operand")
+                };
+                !(s.contains(substr))
+            },
+            _ => panic!("value is not iterable")
+        }
+    }
+
     /// Clones the inner sequence of tuples and lists, this is to iterate
     /// lists and tuples in a for-loop
     pub fn clone_seq(&self) -> Vec<Value> {
@@ -184,22 +217,32 @@ impl fmt::Display for Value {
     }
 }
 
+// TODO need to build this out A LOT more.
 impl cmp::PartialEq for Value {
     fn eq(&self, other: &Value) -> bool {
         match (self, other) {
             (&Value::Number(ref val1), &Value::Number(ref val2)) => {
                 val1 == val2
             },
-            (&Value::Number(_), &Value::None) => false,
+            (&Value::Number(_), _) => false,
             (&Value::Str(ref val1), &Value::Str(ref val2)) => {
                 val1 == val2
             },
-            (&Value::Str(_), &Value::None) => false,
+            (&Value::Str(_), _) => false,
             (&Value::Bool(ref val1), &Value::Bool(ref val2)) => {
                 val1 == val2
             },
-            (&Value::Bool(_), &Value::None) => false,
+            (&Value::Bool(_), _) => false,
+            (&Value::List(ref lst1), &Value::List(ref lst2)) => {
+                *lst1.borrow() == *lst2.borrow()
+            },
+            (&Value::List(_), _) => false,
+            (&Value::Tuple(ref tup1), &Value::Tuple(ref tup2)) => {
+                *tup1 == *tup2
+            },
+            (&Value::Tuple(_), _) => false,
             (&Value::None, &Value::None) => true,
+            (&Value::None, _) => false,
             _ => unimplemented!()
         }
     }
@@ -209,16 +252,25 @@ impl cmp::PartialEq for Value {
             (&Value::Number(ref val1), &Value::Number(ref val2)) => {
                 val1 != val2
             },
-            (&Value::Number(_), &Value::None) => true,
+            (&Value::Number(_), _) => true,
             (&Value::Str(ref val1), &Value::Str(ref val2)) => {
                 val1 != val2
             },
-            (&Value::Str(_), &Value::None) => true,
+            (&Value::Str(_), _) => true,
             (&Value::Bool(ref val1), &Value::Bool(ref val2)) => {
                 val1 != val2
             },
-            (&Value::Bool(_), &Value::None) => true,
+            (&Value::Bool(_), _) => true,
+            (&Value::List(ref lst1), &Value::List(ref lst2)) => {
+                *lst1.borrow() != *lst2.borrow()
+            },
+            (&Value::List(_), _) => true,
+            (&Value::Tuple(ref tup1), &Value::Tuple(ref tup2)) => {
+                *tup1 != *tup2
+            },
+            (&Value::Tuple(_), _) => true,
             (&Value::None, &Value::None) => false,
+            (&Value::None, _) => true,
             _ => unimplemented!()
         }
     }

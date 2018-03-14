@@ -1,4 +1,5 @@
 use std::fmt;
+use std::cmp;
 use std::rc::Rc;
 use std::cell::RefCell;
 
@@ -36,6 +37,10 @@ impl ListType {
         };
 
         self.list[pos].clone()
+    }
+
+    pub fn contains(&self, value: &Value) -> bool {
+        self.list.iter().any(|e| e == value)
     }
 
     /// Returns the length of the list
@@ -201,6 +206,16 @@ impl fmt::Display for ListType {
         output.push_str("]");
 
         write!(f, "{}", output)
+    }
+}
+
+impl cmp::PartialEq for ListType {
+    fn eq(&self, other: &ListType) -> bool {
+        self.list == other.list
+    }
+
+    fn ne(&self, other: &ListType) -> bool {
+        self.list != other.list
     }
 }
 

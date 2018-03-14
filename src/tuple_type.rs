@@ -1,4 +1,5 @@
 use std::fmt;
+use std::cmp;
 
 use super::Value;
 use super::NumericType;
@@ -30,6 +31,10 @@ impl TupleType {
         };
 
         self.list[pos].clone()
+    }
+
+    pub fn contains(&self, value: &Value) -> bool {
+        self.list.iter().any(|e| e == value)
     }
 
     /// Returns the length of the list
@@ -182,6 +187,16 @@ impl fmt::Display for TupleType {
         output.push_str(")");
 
         write!(f, "{}", output)
+    }
+}
+
+impl cmp::PartialEq for TupleType {
+    fn eq(&self, other: &TupleType) -> bool {
+        self.list == other.list
+    }
+
+    fn ne(&self, other: &TupleType) -> bool {
+        self.list != other.list
     }
 }
 
