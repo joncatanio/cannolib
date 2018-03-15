@@ -8,6 +8,7 @@ use super::TupleType;
 use super::IOWrapper;
 use std::collections::HashMap;
 use std::fs::OpenOptions;
+use std::io::Write;
 use std::io::{BufReader, BufRead};
 use std::rc::Rc;
 use std::cell::RefCell;
@@ -25,24 +26,37 @@ pub fn get_scope() -> HashMap<String, Value> {
     tbl
 }
 
-fn print(params: Vec<Value>) -> Value {
+fn print(params: Vec<Value>, kwargs: HashMap<String, Value>) -> Value {
     let mut params_iter = params.iter();
+    let mut output = String::new();
     let value = params_iter.next();
 
     match value {
-        Some(val) => print!("{}", val),
+        Some(val) => output.push_str(&format!("{}", val)),
         None => ()
     }
 
     for value in params_iter {
-        print!(" {}", value)
+        output.push_str(&format!(" {}", value))
     }
 
-    println!();
+    match kwargs.get("file") {
+        Some(&Value::TextIOWrapper(IOWrapper::File(ref file))) => {
+            file.borrow_mut().write_all(format!("{}", output)
+                .as_bytes()).unwrap();
+        },
+        Some(&Value::TextIOWrapper(IOWrapper::Stderr)) => {
+            eprintln!("{}", output)
+        },
+        Some(&Value::TextIOWrapper(IOWrapper::Stdout)) | None => {
+            println!("{}", output)
+        },
+        _ => panic!("print() invalid 'file' argument")
+    }
     Value::None
 }
 
-pub fn py_str(params: Vec<Value>) -> Value {
+pub fn py_str(params: Vec<Value>, _kwargs: HashMap<String, Value>) -> Value {
     let mut params_iter = params.iter();
     let value = params_iter.next();
 
@@ -52,7 +66,7 @@ pub fn py_str(params: Vec<Value>) -> Value {
     }
 }
 
-pub fn len(params: Vec<Value>) -> Value {
+pub fn len(params: Vec<Value>, _kwargs: HashMap<String, Value>) -> Value {
     let mut params_iter = params.iter();
     let value = match params_iter.next() {
         Some(value) => value,
@@ -71,7 +85,7 @@ pub fn len(params: Vec<Value>) -> Value {
 // If one positional argument is provided, it should be an iterable, otherwise
 // each positional argument will be compared to each other.
 // TODO probably should implement std::cmp::Ord on Value to get min/max
-pub fn min(params: Vec<Value>) -> Value {
+pub fn min(params: Vec<Value>, _kwargs: HashMap<String, Value>) -> Value {
     if params.len() == 1 {
         let mut params_iter = params.iter();
         let value = params_iter.next().unwrap();
@@ -105,19 +119,24 @@ pub fn min(params: Vec<Value>) -> Value {
 }
 
 // TODO implement base keyword arg
-pub fn int(params:Vec<Value>) -> Value {
+pub fn int(params:Vec<Value>, _kwargs: HashMap<String, Value>) -> Value {
     if params.is_empty() {
         return Value::Number(NumericType::Integer(0))
     }
     let mut params_iter = params.iter();
     let value = params_iter.next().unwrap();
+    let default = params_iter.next();
 
     match *value {
         Value::Str(ref string) => {
             if let Ok(val) = string.trim().parse::<i32>() {
                 Value::Number(NumericType::Integer(val))
             } else {
-                panic!("could not convert string to int")
+                if let Some(default) = default {
+                    default.clone()
+                } else {
+                    panic!("could not convert string to int")
+                }
             }
         },
         Value::Number(NumericType::Integer(_)) => value.clone(),
@@ -139,19 +158,24 @@ pub fn int(params:Vec<Value>) -> Value {
 /// * '.5', or, equivalently, '0.5'
 ///
 /// Leading and trailing whitespace is trimmed before parsing
-pub fn float(params: Vec<Value>) -> Value {
+pub fn float(params: Vec<Value>, _kwargs: HashMap<String, Value>) -> Value {
     if params.is_empty() {
         return Value::Number(NumericType::Float(0.0))
     }
     let mut params_iter = params.iter();
     let value = params_iter.next().unwrap();
+    let default = params_iter.next();
 
     match *value {
         Value::Str(ref string) => {
             if let Ok(val) = string.trim().parse::<f32>() {
                 Value::Number(NumericType::Float(val))
             } else {
-                panic!("could not convert string to float")
+                if let Some(default) = default {
+                    default.clone()
+                } else {
+                    panic!("could not convert string to float")
+                }
             }
         },
         Value::Number(NumericType::Integer(val)) => {
@@ -166,7 +190,7 @@ pub fn float(params: Vec<Value>) -> Value {
 /// it is not a generator. It will output a Value::List instead of an enumerate
 /// object that calls the iterable's '__next__' function. Ideally it will be
 /// changed to function like Python3.
-pub fn enumerate(params: Vec<Value>) -> Value {
+pub fn enumerate(params: Vec<Value>, _kwargs: HashMap<String, Value>) -> Value {
     if params.is_empty() {
         panic!("enumerate() takes at most 2 arguments, 0 were given")
     }
@@ -218,7 +242,8 @@ pub fn enumerate(params: Vec<Value>) -> Value {
                 IOWrapper::File(ref file) => file,
                 _ => panic!("unsupported operation")
             };
-            let reader = BufReader::new(&**file);
+            let mut f = file.borrow_mut();
+            let reader = BufReader::new(&mut *f);
             reader.lines().map(|x| {
                 let mut string = x.unwrap().to_string();
                 string.push_str("\n");
@@ -236,7 +261,7 @@ pub fn enumerate(params: Vec<Value>) -> Value {
     Value::List(Rc::new(RefCell::new(ListType::new(vec))))
 }
 
-pub fn open(params: Vec<Value>) -> Value {
+pub fn open(params: Vec<Value>, _kwargs: HashMap<String, Value>) -> Value {
     let mut params_iter = params.iter();
     let filename = match params_iter.next() {
         Some(&Value::Str(ref s)) => s,
@@ -261,5 +286,5 @@ pub fn open(params: Vec<Value>) -> Value {
         Err(err) => panic!("error opening file '{}': {}", filename, err)
     };
 
-    Value::TextIOWrapper(IOWrapper::File(Rc::new(file)))
+    Value::TextIOWrapper(IOWrapper::File(Rc::new(RefCell::new(file))))
 }

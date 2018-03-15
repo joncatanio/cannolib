@@ -63,7 +63,8 @@ pub fn split_object(object: Value, members: Option<Vec<(String, String)>>)
 
 // If the attribute belongs to a Value::Class, the `self` value is not passed
 // through to the function call, if it's a Value::Object the value is passed.
-pub fn call_member(value: Value, attr: &str, mut args: Vec<Value>) -> Value {
+pub fn call_member(mut value: Value, attr: &str, mut args: Vec<Value>,
+    kwargs: HashMap<String, Value>) -> Value {
     match value {
         Value::Str(ref string) => {
             // TODO make a string library and write all string methods there
@@ -79,11 +80,11 @@ pub fn call_member(value: Value, attr: &str, mut args: Vec<Value>) -> Value {
             }
         },
         Value::List(ref list) => {
-            list.borrow_mut().call(attr, args)
+            list.borrow_mut().call(attr, args, kwargs)
         },
         Value::Class { ref tbl } => {
             if let Some(func) = tbl.get(attr) {
-                func.call(args)
+                func.call(args, kwargs)
             } else {
                 panic!(format!("'class' has no attribute '{}'", attr))
             }
@@ -98,9 +99,18 @@ pub fn call_member(value: Value, attr: &str, mut args: Vec<Value>) -> Value {
                 panic!(format!("'object' has no attribute '{}'", attr))
             };
 
-            let mut amended_args = vec![value.clone()];
-            amended_args.append(&mut args);
-            func.call(amended_args)
+            let args = match tbl.borrow().get("__module__") {
+                Some(&Value::Bool(true)) => args,
+                Some(_) | None => {
+                    let mut amended_args = vec![value.clone()];
+                    amended_args.append(&mut args);
+                    amended_args
+                }
+            };
+            func.call(args, kwargs)
+        },
+        Value::TextIOWrapper(ref mut iow) => {
+            iow.call(attr, args, kwargs)
         },
         _ => unimplemented!()
     }

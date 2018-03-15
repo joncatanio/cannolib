@@ -17,7 +17,7 @@ pub enum Value {
     Bool(bool),
     List(Rc<RefCell<ListType>>),
     Tuple(TupleType),
-    Function(Rc<Fn(Vec<Value>) -> Value>),
+    Function(Rc<Fn(Vec<Value>, HashMap<String, Value>) -> Value>),
     // Class definitions are immutable in Cannoli
     Class { tbl: HashMap<String, Value> },
     Object { tbl: Rc<RefCell<HashMap<String, Value>>> },
@@ -32,6 +32,9 @@ impl Value {
             Value::Str(ref val) => !val.is_empty(),
             Value::Bool(ref val) => *val,
             Value::List(ref list) => list.borrow().to_bool(),
+            Value::Tuple(ref tup) => tup.to_bool(),
+            Value::Function(_) => true,
+            Value::Class { .. } => true,
             Value::Object { .. } => true,
             Value::None => false,
             _ => unimplemented!()
@@ -116,10 +119,10 @@ impl Value {
     }
 
     /// Makes the Value a callable type, this will execute Value::Functions
-    pub fn call(&self, mut args: Vec<Value>)
+    pub fn call(&self, mut args: Vec<Value>, kwargs: HashMap<String, Value>)
         -> Value {
         match *self {
-            Value::Function(ref f) => f(args),
+            Value::Function(ref f) => f(args, kwargs),
             Value::Class { ref tbl } => {
                 let obj = Value::Object {
                     tbl: Rc::new(RefCell::new(tbl.clone()))
@@ -128,7 +131,7 @@ impl Value {
                 if let Some(value) = tbl.get("__init__") {
                     let mut amended_args = vec![obj.clone()];
                     amended_args.append(&mut args);
-                    value.call(amended_args);
+                    value.call(amended_args, kwargs);
                 }
                 obj
             },
@@ -175,17 +178,17 @@ impl fmt::Debug for Value {
             Value::Tuple(ref tup) => write!(f, "{}", tup),
             Value::Function(_) => write!(f, "<cannoli function>"),
             Value::Object { ref tbl } => {
-                if let Some(value) = tbl.borrow().get("__class__") {
+                if let Some(value) = tbl.borrow().get("__name__") {
                     write!(f, "<'{}' object at {:p}>", value, tbl)
                 } else {
-                    panic!("missing '__class__' attribute")
+                    panic!("missing '__name__' attribute")
                 }
             },
             Value::Class { ref tbl } => {
-                if let Some(value) = tbl.get("__class__") {
+                if let Some(value) = tbl.get("__name__") {
                     write!(f, "<'{}' class at {:p}>", value, tbl)
                 } else {
-                    panic!("missing '__class__' attribute")
+                    panic!("missing '__name__' attribute")
                 }
             },
             Value::TextIOWrapper(_) => write!(f, "TextIOWrapper"),
@@ -210,17 +213,17 @@ impl fmt::Display for Value {
             Value::Tuple(ref tup) => write!(f, "{}", tup),
             Value::Function(_) => write!(f, "<cannoli function>"),
             Value::Object { ref tbl } => {
-                if let Some(value) = tbl.borrow().get("__class__") {
+                if let Some(value) = tbl.borrow().get("__name__") {
                     write!(f, "<'{}' object at {:p}>", value, tbl)
                 } else {
-                    panic!("missing '__class__' attribute")
+                    panic!("missing '__name__' attribute")
                 }
             },
             Value::Class { ref tbl } => {
-                if let Some(value) = tbl.get("__class__") {
+                if let Some(value) = tbl.get("__name__") {
                     write!(f, "<'{}' class at {:p}>", value, tbl)
                 } else {
-                    panic!("missing '__class__' attribute")
+                    panic!("missing '__name__' attribute")
                 }
             },
             Value::TextIOWrapper(_) => write!(f, "TextIOWrapper"),

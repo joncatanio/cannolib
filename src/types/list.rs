@@ -1,5 +1,6 @@
 use std::fmt;
 use std::cmp;
+use std::collections::HashMap;
 use std::rc::Rc;
 use std::cell::RefCell;
 
@@ -154,14 +155,16 @@ impl ListType {
         self.list.clone()
     }
 
-    pub fn call(&mut self, attr: &str, args: Vec<Value>) -> Value {
+    pub fn call(&mut self, attr: &str, args: Vec<Value>,
+        kwargs: HashMap<String, Value>) -> Value {
         match attr {
-            "append" => self.append(args),
+            "append" => self.append(args, kwargs),
             _ => panic!(format!("'list' has no attribute '{}'", attr))
         }
     }
 
-    fn append(&mut self, mut args: Vec<Value>) -> Value {
+    fn append(&mut self, mut args: Vec<Value>,
+        _kwargs: HashMap<String, Value>) -> Value {
         if args.len() != 1 {
             panic!(format!("append() takes exactly one argument ({} given)",
                 args.len()));

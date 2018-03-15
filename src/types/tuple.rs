@@ -14,6 +14,10 @@ impl TupleType {
         TupleType { list }
     }
 
+    pub fn to_bool(&self) -> bool {
+        !(self.list.is_empty())
+    }
+
     pub fn index(&self, index: Value) -> Value {
         let pos = match index {
             Value::Number(NumericType::Integer(pos)) => pos,

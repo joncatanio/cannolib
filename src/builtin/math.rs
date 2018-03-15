@@ -5,12 +5,12 @@ use std::rc::Rc;
 
 pub fn import_module() -> Value {
     let mut tbl = HashMap::new();
-    tbl.insert("__class__".to_string(), Value::Str("math".to_string()));
+    tbl.insert("__name__".to_string(), Value::Str("math".to_string()));
     tbl.insert("sqrt".to_string(), Value::Function(Rc::new(sqrt)));
     Value::Class { tbl }
 }
 
-fn sqrt(params: Vec<Value>) -> Value {
+fn sqrt(params: Vec<Value>, _kwargs: HashMap<String, Value>) -> Value {
     if params.is_empty() {
         panic!("sqrt() takes exactly one argument")
     }
