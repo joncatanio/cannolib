@@ -8,6 +8,7 @@ use std::cell::RefCell;
 use super::NumericType;
 use super::ListType;
 use super::TupleType;
+use super::IOWrapper;
 
 #[derive(Clone)]
 pub enum Value {
@@ -20,6 +21,7 @@ pub enum Value {
     // Class definitions are immutable in Cannoli
     Class { tbl: HashMap<String, Value> },
     Object { tbl: Rc<RefCell<HashMap<String, Value>>> },
+    TextIOWrapper(IOWrapper),
     None
 }
 
@@ -185,7 +187,8 @@ impl fmt::Debug for Value {
                 } else {
                     panic!("missing '__class__' attribute")
                 }
-            }
+            },
+            Value::TextIOWrapper(_) => write!(f, "TextIOWrapper"),
             Value::None => write!(f, "None"),
         }
     }
@@ -219,7 +222,8 @@ impl fmt::Display for Value {
                 } else {
                     panic!("missing '__class__' attribute")
                 }
-            }
+            },
+            Value::TextIOWrapper(_) => write!(f, "TextIOWrapper"),
             Value::None => write!(f, "None"),
         }
     }

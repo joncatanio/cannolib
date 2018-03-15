@@ -3,7 +3,7 @@ use std::cmp;
 use std::rc::Rc;
 use std::cell::RefCell;
 
-use super::Value;
+use ::Value;
 use super::NumericType;
 
 #[derive(Debug, Clone)]

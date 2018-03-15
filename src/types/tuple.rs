@@ -1,7 +1,7 @@
 use std::fmt;
 use std::cmp;
 
-use super::Value;
+use ::Value;
 use super::NumericType;
 
 #[derive(Debug, Clone)]

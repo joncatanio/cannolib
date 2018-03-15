@@ -1,8 +1,14 @@
+pub mod sys;
+pub mod math;
+
 use super::Value;
 use super::NumericType;
 use super::ListType;
 use super::TupleType;
+use super::IOWrapper;
 use std::collections::HashMap;
+use std::fs::OpenOptions;
+use std::io::{BufReader, BufRead};
 use std::rc::Rc;
 use std::cell::RefCell;
 
@@ -15,6 +21,7 @@ pub fn get_scope() -> HashMap<String, Value> {
     tbl.insert("int".to_string(), Value::Function(Rc::new(int)));
     tbl.insert("float".to_string(), Value::Function(Rc::new(float)));
     tbl.insert("enumerate".to_string(), Value::Function(Rc::new(enumerate)));
+    tbl.insert("open".to_string(), Value::Function(Rc::new(open)));
     tbl
 }
 
@@ -206,8 +213,53 @@ pub fn enumerate(params: Vec<Value>) -> Value {
                 tup
             }).collect()
         },
+        Value::TextIOWrapper(ref iow) => {
+            let file = match *iow {
+                IOWrapper::File(ref file) => file,
+                _ => panic!("unsupported operation")
+            };
+            let reader = BufReader::new(&**file);
+            reader.lines().map(|x| {
+                let mut string = x.unwrap().to_string();
+                string.push_str("\n");
+                let tup = Value::Tuple(TupleType::new(vec![
+                    Value::Number(NumericType::Integer(start)),
+                    Value::Str(string)
+                ]));
+                start += 1;
+                tup
+            }).collect()
+        },
         _ => panic!("enumerate() value not iterable")
     };
 
     Value::List(Rc::new(RefCell::new(ListType::new(vec))))
+}
+
+pub fn open(params: Vec<Value>) -> Value {
+    let mut params_iter = params.iter();
+    let filename = match params_iter.next() {
+        Some(&Value::Str(ref s)) => s,
+        Some(_) => unimplemented!(),
+        None => panic!("bad 'file' parameter specified")
+    };
+    let mode = match params_iter.next() {
+        Some(&Value::Str(ref s)) => s,
+        Some(_) => panic!("'mode' must be a str"),
+        None => "r"
+    };
+    let mode_r = mode.contains("r");
+    let mode_w = mode.contains("w");
+    let result = OpenOptions::new()
+        .read(mode_r)
+        .write(mode_w)
+        .truncate(mode_w)
+        .create(mode_w)
+        .open(filename);
+    let file = match result {
+        Ok(file) => file,
+        Err(err) => panic!("error opening file '{}': {}", filename, err)
+    };
+
+    Value::TextIOWrapper(IOWrapper::File(Rc::new(file)))
 }
