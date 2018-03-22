@@ -1,5 +1,6 @@
 use super::Value;
 use super::ListType;
+use super::IOWrapper;
 use std::env;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -9,6 +10,7 @@ pub fn import_module() -> Value {
     let mut tbl = HashMap::new();
     tbl.insert("__name__".to_string(), Value::Str("sys".to_string()));
     tbl.insert("argv".to_string(), setup_argv());
+    tbl.insert("stderr".to_string(), Value::TextIOWrapper(IOWrapper::Stderr));
     Value::Class { tbl }
 }
 

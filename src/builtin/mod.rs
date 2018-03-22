@@ -42,7 +42,7 @@ fn print(params: Vec<Value>, kwargs: HashMap<String, Value>) -> Value {
 
     match kwargs.get("file") {
         Some(&Value::TextIOWrapper(IOWrapper::File(ref file))) => {
-            file.borrow_mut().write_all(format!("{}", output)
+            file.borrow_mut().write_all(format!("{}\n", output)
                 .as_bytes()).unwrap();
         },
         Some(&Value::TextIOWrapper(IOWrapper::Stderr)) => {
