@@ -13,17 +13,19 @@ use std::io::{BufReader, BufRead};
 use std::rc::Rc;
 use std::cell::RefCell;
 
-pub fn get_scope() -> HashMap<String, Value> {
-    let mut tbl = HashMap::new();
-    tbl.insert("print".to_string(), Value::Function(Rc::new(print)));
-    tbl.insert("str".to_string(), Value::Function(Rc::new(py_str)));
-    tbl.insert("len".to_string(), Value::Function(Rc::new(len)));
-    tbl.insert("min".to_string(), Value::Function(Rc::new(min)));
-    tbl.insert("int".to_string(), Value::Function(Rc::new(int)));
-    tbl.insert("float".to_string(), Value::Function(Rc::new(float)));
-    tbl.insert("enumerate".to_string(), Value::Function(Rc::new(enumerate)));
-    tbl.insert("open".to_string(), Value::Function(Rc::new(open)));
-    tbl
+const NUM_BUILTIN_FUNCS: usize = 8;
+
+pub fn get_scope() -> Vec<Value> {
+    let mut vec = Vec::with_capacity(NUM_BUILTIN_FUNCS);
+    vec.push(Value::Function(Rc::new(print)));
+    vec.push(Value::Function(Rc::new(py_str)));
+    vec.push(Value::Function(Rc::new(len)));
+    vec.push(Value::Function(Rc::new(min)));
+    vec.push(Value::Function(Rc::new(int)));
+    vec.push(Value::Function(Rc::new(float)));
+    vec.push(Value::Function(Rc::new(enumerate)));
+    vec.push(Value::Function(Rc::new(open)));
+    vec
 }
 
 fn print(params: Vec<Value>, kwargs: HashMap<String, Value>) -> Value {
