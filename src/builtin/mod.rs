@@ -28,6 +28,25 @@ pub fn get_scope() -> Vec<Value> {
     vec
 }
 
+pub fn get_mapping() -> HashMap<String, usize> {
+    let mut vec = Vec::new();
+    let mut map = HashMap::new();
+
+    vec.push("print".to_string());
+    vec.push("str".to_string());
+    vec.push("len".to_string());
+    vec.push("min".to_string());
+    vec.push("int".to_string());
+    vec.push("float".to_string());
+    vec.push("enumerate".to_string());
+    vec.push("open".to_string());
+    vec.into_iter().enumerate().for_each(|(ndx, key)| {
+        map.insert(key, ndx);
+    });
+
+    map
+}
+
 fn print(params: Vec<Value>, kwargs: HashMap<String, Value>) -> Value {
     let mut params_iter = params.iter();
     let mut output = String::new();
