@@ -1,5 +1,4 @@
-use super::Value;
-use super::NumericType;
+use super::{Value, NumericType};
 use std::collections::HashMap;
 use std::rc::Rc;
 
