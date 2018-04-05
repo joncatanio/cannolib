@@ -22,6 +22,7 @@ pub enum Value {
     Class { tbl: HashMap<String, Value> },
     Object { tbl: Rc<RefCell<HashMap<String, Value>>> },
     TextIOWrapper(IOWrapper),
+    Undefined,
     None
 }
 
@@ -192,7 +193,8 @@ impl fmt::Debug for Value {
                 }
             },
             Value::TextIOWrapper(_) => write!(f, "TextIOWrapper"),
-            Value::None => write!(f, "None"),
+            Value::Undefined => write!(f, "Undefined"),
+            Value::None => write!(f, "None")
         }
     }
 }
@@ -227,7 +229,8 @@ impl fmt::Display for Value {
                 }
             },
             Value::TextIOWrapper(_) => write!(f, "TextIOWrapper"),
-            Value::None => write!(f, "None"),
+            Value::Undefined => write!(f, "Undefined"),
+            Value::None => write!(f, "None")
         }
     }
 }
