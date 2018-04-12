@@ -28,7 +28,7 @@ pub fn get_scope() -> Vec<Value> {
     vec
 }
 
-pub fn get_mapping() -> HashMap<String, usize> {
+pub fn get_mapping() -> HashMap<String, (usize, Option<String>)> {
     let mut vec = Vec::new();
     let mut map = HashMap::new();
 
@@ -41,7 +41,7 @@ pub fn get_mapping() -> HashMap<String, usize> {
     vec.push("enumerate".to_string());
     vec.push("open".to_string());
     vec.into_iter().enumerate().for_each(|(ndx, key)| {
-        map.insert(key, ndx);
+        map.insert(key, (ndx, None));
     });
 
     map
