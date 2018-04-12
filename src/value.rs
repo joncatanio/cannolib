@@ -19,8 +19,8 @@ pub enum Value {
     Tuple(TupleType),
     Function(Rc<Fn(Vec<Value>, HashMap<String, Value>) -> Value>),
     // Class definitions are immutable in Cannoli
-    Class { tbl: HashMap<String, Value> },
-    Object { tbl: Rc<RefCell<HashMap<String, Value>>> },
+    Class { tbl: Rc<HashMap<String, usize>>, members: Vec<Value> },
+    Object {tbl: Rc<HashMap<String, usize>>, members: Rc<RefCell<Vec<Value>>>},
     TextIOWrapper(IOWrapper),
     Undefined,
     None
@@ -124,15 +124,16 @@ impl Value {
         -> Value {
         match *self {
             Value::Function(ref f) => f(args, kwargs),
-            Value::Class { ref tbl } => {
+            Value::Class { ref tbl, ref members } => {
                 let obj = Value::Object {
-                    tbl: Rc::new(RefCell::new(tbl.clone()))
+                    tbl: tbl.clone(),
+                    members: Rc::new(RefCell::new(members.clone()))
                 };
 
-                if let Some(value) = tbl.get("__init__") {
+                if let Some(ndx) = tbl.get("__init__") {
                     let mut amended_args = vec![obj.clone()];
                     amended_args.append(&mut args);
-                    value.call(amended_args, kwargs);
+                    members[*ndx].call(amended_args, kwargs);
                 }
                 obj
             },
@@ -144,16 +145,16 @@ impl Value {
     /// a reference that is also handled.
     pub fn get_attr(&self, attr: &str) -> Value {
         match *self {
-            Value::Object { ref tbl } => {
-                if let Some(value) = tbl.borrow().get(attr) {
-                    value.clone()
+            Value::Object { ref tbl, ref members } => {
+                if let Some(ndx) = tbl.get(attr) {
+                    members.borrow()[*ndx].clone()
                 } else {
                     panic!(format!("object has no attribute '{}'", attr))
                 }
             },
-            Value::Class { ref tbl } => {
-                if let Some(value) = tbl.get(attr) {
-                    value.clone()
+            Value::Class { ref tbl, ref members } => {
+                if let Some(ndx) = tbl.get(attr) {
+                    members[*ndx].clone()
                 } else {
                     panic!(format!("class has no attribute '{}'", attr))
                 }
@@ -178,16 +179,17 @@ impl fmt::Debug for Value {
             Value::List(ref list) => write!(f, "{}", list.borrow()),
             Value::Tuple(ref tup) => write!(f, "{}", tup),
             Value::Function(_) => write!(f, "<cannoli function>"),
-            Value::Object { ref tbl } => {
-                if let Some(value) = tbl.borrow().get("__name__") {
-                    write!(f, "<'{}' object at {:p}>", value, tbl)
+            Value::Object { ref tbl, ref members } => {
+                if let Some(ndx) = tbl.get("__name__") {
+                    write!(f, "<'{}' object at {:p}>", members.borrow()[*ndx],
+                    members)
                 } else {
                     panic!("missing '__name__' attribute")
                 }
             },
-            Value::Class { ref tbl } => {
-                if let Some(value) = tbl.get("__name__") {
-                    write!(f, "<'{}' class at {:p}>", value, tbl)
+            Value::Class { ref tbl, ref members } => {
+                if let Some(ndx) = tbl.get("__name__") {
+                    write!(f, "<'{}' class at {:p}>", members[*ndx], members)
                 } else {
                     panic!("missing '__name__' attribute")
                 }
@@ -214,16 +216,17 @@ impl fmt::Display for Value {
             Value::List(ref list) => write!(f, "{}", list.borrow()),
             Value::Tuple(ref tup) => write!(f, "{}", tup),
             Value::Function(_) => write!(f, "<cannoli function>"),
-            Value::Object { ref tbl } => {
-                if let Some(value) = tbl.borrow().get("__name__") {
-                    write!(f, "<'{}' object at {:p}>", value, tbl)
+            Value::Object { ref tbl, ref members } => {
+                if let Some(ndx) = tbl.get("__name__") {
+                    write!(f, "<'{}' object at {:p}>", members.borrow()[*ndx],
+                    members)
                 } else {
                     panic!("missing '__name__' attribute")
                 }
             },
-            Value::Class { ref tbl } => {
-                if let Some(value) = tbl.get("__name__") {
-                    write!(f, "<'{}' class at {:p}>", value, tbl)
+            Value::Class { ref tbl, ref members } => {
+                if let Some(ndx) = tbl.get("__name__") {
+                    write!(f, "<'{}' class at {:p}>", members[*ndx], members)
                 } else {
                     panic!("missing '__name__' attribute")
                 }

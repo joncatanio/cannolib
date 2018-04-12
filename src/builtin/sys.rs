@@ -5,13 +5,30 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use std::process;
 
+const MOD_SIZE: usize = 4;
+
 pub fn import_module() -> Value {
     let mut tbl = HashMap::new();
-    tbl.insert("__name__".to_string(), Value::Str("sys".to_string()));
-    tbl.insert("argv".to_string(), setup_argv());
-    tbl.insert("stderr".to_string(), Value::TextIOWrapper(IOWrapper::Stderr));
-    tbl.insert("exit".to_string(), Value::Function(Rc::new(py_exit)));
-    Value::Class { tbl }
+    let mut members = Vec::with_capacity(MOD_SIZE);
+    members.resize(MOD_SIZE, Value::Undefined);
+
+    let mut ndx = 0;
+    tbl.insert("__name__".to_string(), ndx);
+    members[ndx] = Value::Str("sys".to_string());
+
+    ndx += 1;
+    tbl.insert("argv".to_string(), ndx);
+    members[ndx] = setup_argv();
+
+    ndx += 1;
+    tbl.insert("stderr".to_string(), ndx);
+    members[ndx] = Value::TextIOWrapper(IOWrapper::Stderr);
+
+    ndx += 1;
+    tbl.insert("exit".to_string(), ndx);
+    members[ndx] = Value::Function(Rc::new(py_exit));
+
+    Value::Class { tbl: Rc::new(tbl), members }
 }
 
 fn setup_argv() -> Value {

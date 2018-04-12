@@ -28,36 +28,39 @@ pub fn lookup_value(scope: &Vec<Rc<RefCell<HashMap<String, Value>>>>,
 /// Attribute assign modifies the `dest` argument.
 pub fn attr_assign(dest: Value, attr: &str, src: Value) {
     match dest {
-        Value::Object { ref tbl } => {
-            tbl.borrow_mut().insert(attr.to_string(), src);
+        Value::Object { ref tbl, ref members } => {
+            if let Some(ndx) = tbl.get(attr) {
+                members.borrow_mut()[*ndx] = src;
+            } else {
+                panic!(format!("'object' has no attribute '{}'", attr));
+            }
         },
         _ => panic!("cannot access attribute on primitives")
     }
 }
 
+// TODO this probably should return a HashMap anymore, this won't be used
+// in the optimizations for the paper though, just changing it to compile.
 /// Takes an object and a list of (names, aliases) and deconstructs the object
 /// into a HashMap will be merged into the local scope list. If None is passed
-/// into the 'members' parameter the entire object is mapped.
-pub fn split_object(object: Value, members: Option<Vec<(String, String)>>)
+/// into the 'membs' parameter the entire object is mapped.
+pub fn split_object(object: Value, membs: Option<Vec<(String, String)>>)
     -> HashMap<String, Value> {
     let mut map: HashMap<String, Value> = HashMap::new();
-    let tbl = match object {
-        Value::Object { ref tbl } => tbl,
+    let (tbl, members) = match object {
+        Value::Object { ref tbl, ref members } => (tbl, members),
         _ => panic!("Value is not 'object'")
     };
 
-    if let Some(members) = members {
-        for member in members.iter() {
-            let value = match tbl.borrow().get(&member.0) {
-                Some(value) => value.clone(),
-                None => panic!(format!("no member '{}' found", member.0))
-            };
-
-            map.insert(member.1.clone(), value);
+    if let Some(membs) = membs {
+        for member in membs.iter() {
+            let ndx = tbl.get(&member.0).expect(&format!("no member '{}' found",
+                member.0));
+            map.insert(member.1.clone(), (members.borrow()[*ndx]).clone());
         }
         map
     } else {
-        tbl.borrow().clone()
+        unimplemented!()
     }
 }
 
@@ -82,31 +85,39 @@ pub fn call_member(mut value: Value, attr: &str, mut args: Vec<Value>,
         Value::List(ref list) => {
             list.borrow_mut().call(attr, args, kwargs)
         },
-        Value::Class { ref tbl } => {
-            if let Some(func) = tbl.get(attr) {
-                func.call(args, kwargs)
+        Value::Class { ref tbl, ref members } => {
+            if let Some(ndx) = tbl.get(attr) {
+                members[*ndx].call(args, kwargs)
             } else {
                 panic!(format!("'class' has no attribute '{}'", attr))
             }
         },
-        Value::Object { ref tbl } => {
+        Value::Object { ref tbl, ref members } => {
             // This forces the borrowed `tbl` value to be dropped, without the
             // .clone() on `func` this won't compile. If the func.call() was
             // inside the if-statement we would get a runtime borrow panic.
-            let func = if let Some(func) = tbl.borrow().get(attr) {
-                func.clone()
+            let func = if let Some(ndx) = tbl.get(attr) {
+                members.borrow()[*ndx].clone()
             } else {
                 panic!(format!("'object' has no attribute '{}'", attr))
             };
-
-            let args = match tbl.borrow().get("__module__") {
-                Some(&Value::Bool(true)) => args,
-                Some(_) | None => {
-                    let mut amended_args = vec![value.clone()];
-                    amended_args.append(&mut args);
-                    amended_args
-                }
+            let is_module = match tbl.get("__module__") {
+                Some(ndx) => {
+                    match members.borrow()[*ndx] {
+                        Value::Bool(boolean) => boolean,
+                        _ => false
+                    }
+                },
+                None => false
             };
+            let args = if is_module {
+                args
+            } else {
+                let mut amended_args = vec![value.clone()];
+                amended_args.append(&mut args);
+                amended_args
+            };
+
             func.call(args, kwargs)
         },
         Value::TextIOWrapper(ref mut iow) => {
