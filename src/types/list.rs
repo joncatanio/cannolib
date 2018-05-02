@@ -159,12 +159,13 @@ impl ListType {
         kwargs: HashMap<String, Value>) -> Value {
         match attr {
             "append" => self.append(args, kwargs),
+            "pop"    => self.pop(args, kwargs),
             _ => panic!(format!("'list' has no attribute '{}'", attr))
         }
     }
 
-    fn append(&mut self, mut args: Vec<Value>,
-        _kwargs: HashMap<String, Value>) -> Value {
+    fn append(&mut self, mut args: Vec<Value>, _kwargs: HashMap<String, Value>)
+        -> Value {
         if args.len() != 1 {
             panic!(format!("append() takes exactly one argument ({} given)",
                 args.len()));
@@ -172,6 +173,11 @@ impl ListType {
 
         self.list.push(args.pop().unwrap());
         Value::None
+    }
+
+    fn pop(&mut self, mut _args: Vec<Value>, _kwargs: HashMap<String, Value>)
+        -> Value {
+        self.list.pop().expect("IndexError: pop from an empty list")
     }
 }
 
