@@ -113,7 +113,7 @@ impl ListType {
                 let upper = if temp == self.list.len() as i32 { temp as usize }
                     else { (temp + 1) as usize };
 
-                let list: Vec<Value> = (&self.list[lower..upper]).to_vec()
+                let list: Vec<Value> = (&self.list[lower..upper])
                     .iter().map(|val| val.clone()).collect();
 
                 list.iter().rev().enumerate()
@@ -140,7 +140,7 @@ impl ListType {
             if lower >= upper {
                 vec![]
             } else {
-                (&self.list[lower..upper]).to_vec().iter()
+                (&self.list[lower..upper]).iter()
                     .enumerate()
                     .filter(|elem| elem.0 % (step as usize) == 0)
                     .map(|elem| elem.1.clone())
