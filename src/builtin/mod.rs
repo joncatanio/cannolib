@@ -8,8 +8,8 @@ use super::TupleType;
 use super::IOWrapper;
 use std::collections::HashMap;
 use std::fs::OpenOptions;
-use std::io::Write;
-use std::io::{BufReader, BufRead};
+use std::io;
+use std::io::{Write, BufReader, BufRead};
 use std::rc::Rc;
 use std::cell::RefCell;
 
@@ -70,7 +70,7 @@ fn print(params: Vec<Value>, kwargs: HashMap<String, Value>) -> Value {
             eprintln!("{}", output)
         },
         Some(&Value::TextIOWrapper(IOWrapper::Stdout)) | None => {
-            println!("{}", output)
+            io::stdout().write(format!("{}\n", output).as_bytes()).unwrap();
         },
         _ => panic!("print() invalid 'file' argument")
     }
