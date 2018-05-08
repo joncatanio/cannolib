@@ -8,8 +8,7 @@ use super::TupleType;
 use super::IOWrapper;
 use std::collections::HashMap;
 use std::fs::OpenOptions;
-use std::io::Write;
-use std::io::{BufReader, BufRead};
+use std::io::{Write, BufReader, BufRead};
 use std::rc::Rc;
 use std::cell::RefCell;
 

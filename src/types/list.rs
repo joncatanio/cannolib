@@ -113,7 +113,7 @@ impl ListType {
                 let upper = if temp == self.list.len() as i32 { temp as usize }
                     else { (temp + 1) as usize };
 
-                let list: Vec<Value> = (&self.list[lower..upper]).to_vec()
+                let list: Vec<Value> = (&self.list[lower..upper])
                     .iter().map(|val| val.clone()).collect();
 
                 list.iter().rev().enumerate()
@@ -140,7 +140,7 @@ impl ListType {
             if lower >= upper {
                 vec![]
             } else {
-                (&self.list[lower..upper]).to_vec().iter()
+                (&self.list[lower..upper]).iter()
                     .enumerate()
                     .filter(|elem| elem.0 % (step as usize) == 0)
                     .map(|elem| elem.1.clone())
@@ -159,12 +159,13 @@ impl ListType {
         kwargs: HashMap<String, Value>) -> Value {
         match attr {
             "append" => self.append(args, kwargs),
+            "pop"    => self.pop(args, kwargs),
             _ => panic!(format!("'list' has no attribute '{}'", attr))
         }
     }
 
-    fn append(&mut self, mut args: Vec<Value>,
-        _kwargs: HashMap<String, Value>) -> Value {
+    fn append(&mut self, mut args: Vec<Value>, _kwargs: HashMap<String, Value>)
+        -> Value {
         if args.len() != 1 {
             panic!(format!("append() takes exactly one argument ({} given)",
                 args.len()));
@@ -172,6 +173,11 @@ impl ListType {
 
         self.list.push(args.pop().unwrap());
         Value::None
+    }
+
+    fn pop(&mut self, mut _args: Vec<Value>, _kwargs: HashMap<String, Value>)
+        -> Value {
+        self.list.pop().expect("IndexError: pop from an empty list")
     }
 }
 
